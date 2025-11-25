@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jys.smartbudget.mapper.BudgetMapper">
+
+    <insert id="insertBudget">
+        INSERT INTO budget (user_id, category, amount, year, month, description)
+        VALUES (#{userId}, #{category}, #{amount}, #{year}, #{month}, #{budgetDescription})
+    </insert>
+
+    <select id="selectBudgetsByConditionWithPaging" resultType="com.jys.smartbudget.dto.BudgetDTO">
+        SELECT 
+            b.id, 
+            b.category, 
+            b.amount, 
+            b.month, 
+            b.description AS budgetDescription,
+            b.user_id,
+            c.description AS categoryDescription
+        FROM budget b
+        LEFT JOIN category c ON b.category = c.code
+        WHERE b.user_id = #{userId}
+        <if test="category != null and category != ''">
+            AND b.category = #{category}
+        </if>
+        <if test="year != null">
+            AND year = #{year}
+        </if>
+        <if test="month != null">
+            AND month = #{month}
+        </if>
+        ORDER BY b.month DESC
+    </select>
+
+    <update id="updateBudget">
+        UPDATE budget
+        SET category = #{category},
+            amount = #{amount},
+            year = #{year},
+            month = #{month},
+            description = #{budgetDescription}
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <delete id="deleteBudget">
+        DELETE FROM budget
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </delete>
+
+    <select id="existsByYearMonthCategory">
+    SELECT COUNT(*) FROM budget WHERE year=#{year} AND month=#{month} AND category=#{category}
+    </select>
+
+</mapper>

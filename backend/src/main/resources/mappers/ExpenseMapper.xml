@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jys.smartbudget.mapper.ExpenseMapper">
+
+    <select id="searchExpenses" resultType="com.jys.smartbudget.dto.ExpenseDTO">
+        SELECT 
+        e.id,
+        b.id AS budgetId,
+        e.user_id AS userId,
+        e.amount,
+        e.day,
+        e.description AS description,
+        c.description AS category
+        FROM expense e
+        LEFT JOIN budget b ON b.id = e.budget_id
+        LEFT JOIN category c ON c.code = b.category 
+        WHERE e.user_id = #{userId}
+        <if test="year != null">
+            AND e.year = #{year}
+        </if>
+        <if test="month != null">
+            AND e.month = #{month}
+        </if>
+        ORDER BY e.month DESC
+    </select>
+
+    <!-- 지출 등록 -->
+    <insert id="insertExpense" parameterType="com.jys.smartbudget.dto.ExpenseDTO">
+        INSERT INTO expense (budget_id, amount, year, month, day, description, user_id)
+        VALUES (#{budgetId}, #{amount}, #{year}, #{month}, #{day}, #{description}, #{userId})
+    </insert>
+
+    <!-- 지출 수정 -->
+    <update id="updateExpense" parameterType="com.jys.smartbudget.dto.ExpenseDTO">
+        UPDATE expense
+        SET amount = #{amount},
+            description = #{description},
+            year = #{year},
+            month = #{month},
+            day = #{day}
+        WHERE id = #{id} AND user_id = #{userId}
+    </update>
+
+    <!-- 지출 삭제 (PK + userId 체크) -->
+    <delete id="deleteExpenseByIdAndUserId">
+        DELETE FROM expense
+        WHERE id = #{id} AND user_id = #{userId}
+    </delete>
+
+    <select id="checkOverBudget" resultType="boolean" parameterType="com.jys.smartbudget.dto.ExpenseDTO">
+        SELECT 
+            CASE 
+                WHEN (
+                    (SELECT COALESCE(SUM(amount), 0) 
+                    FROM expense 
+                    WHERE budget_id = #{budgetId} 
+                    AND year = #{year} 
+                    AND month = #{month})
+                    + #{amount}
+                ) > (SELECT amount FROM budget WHERE id = #{budgetId})
+                THEN 1
+                ELSE 0
+            END AS overBudget
+    </select>
+
+
+</mapper>
