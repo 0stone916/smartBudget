@@ -24,7 +24,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       alert("인증 실패. 다시 로그인해주세요.");
       localStorage.removeItem("jwtToken");
-      window.location.reload(); // 로그인 화면으로 강제 이동
+      window.location.reload(); // 로그인 화면으로 이동
     }
     return Promise.reject(error);
   }
