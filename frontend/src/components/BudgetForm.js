@@ -30,7 +30,7 @@ const selectStyle = {
   border: "1px solid #ccc",
   fontSize: "14px",
   backgroundColor: "#fff",
-  appearance: "none", // 기본 화살표 제거
+  appearance: "none", 
   cursor: "pointer",
 };
 
