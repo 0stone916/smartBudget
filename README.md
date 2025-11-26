@@ -5,25 +5,24 @@ SmartBudget은 React와 Spring Boot로 구축한 개인 예산 관리 서비스�
 
 ## 🔧 사용 기술 스택
 
-Frontend
-
+`Front-End` 
 - React
 
 - Axios
 
 - Chart.js, react-chartjs-2
-
-Backend
+  
+`Back-end`
 
 - Spring Boot
 
 - MyBatis
 
-Database
+`Database`
 
 - MySQL
 
-Auth
+`Auth`
 
 - JWT (Access Token)
 
