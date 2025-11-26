@@ -22,17 +22,25 @@ public class BudgetController {
     }
 
     // 예산 등록 (JWT에서 userId 추출)
+
+
     @PostMapping
     public ResponseEntity<ApiResponse> insertBudget(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody BudgetDTO budget) {
 
         String token = authHeader.replace("Bearer ", "");
-        String userId = JwtUtil.extractUserId(token);
-        budget.setUserId(userId);
+        try {
+            // JWT 검증
+            String userId = JwtUtil.extractUserId(token);
+            budget.setUserId(userId);
+        } catch (Exception e) {
+            // 토큰이 변조되었거나 만료된 경우
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(false, "유효하지 않은 토큰입니다.", null));
+        }
 
         boolean exists = budgetService.existsByYearMonthCategory(budget);
-    
         if (exists) {
             return ResponseEntity.ok(
                 new ApiResponse(false, "해당 년월에 이미 등록된 카테고리입니다.", null));
