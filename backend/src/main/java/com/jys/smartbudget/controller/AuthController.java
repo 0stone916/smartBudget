@@ -4,13 +4,12 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.UserDTO;
+import com.jys.smartbudget.service.RedisTokenService;
 import com.jys.smartbudget.service.UserService;
 import com.jys.smartbudget.config.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -18,17 +17,26 @@ import java.util.Map;
 public class AuthController {
 
     private final UserService userService;
+    private final RedisTokenService redisTokenService;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@RequestBody UserDTO user) {
+
         UserDTO loginUser = userService.login(user.getUserId(), user.getPassword());
         if (loginUser != null) {
+
             String token = JwtUtil.generateToken(loginUser.getUserId());
+
+            // 기존 토큰 제거 + 새 토큰 저장 (단일기기 로그인)
+            redisTokenService.saveToken(loginUser.getUserId(), token);
+
             return ResponseEntity.ok(new ApiResponse(true, "로그인 성공", token));
         }
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse(false, "아이디 또는 비밀번호가 틀렸습니다.", null));
     }
+
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@RequestBody UserDTO user) {
