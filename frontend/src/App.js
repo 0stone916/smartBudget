@@ -54,6 +54,8 @@ export default function App() {
 
   // 예산 조회
   useEffect(() => {
+    if (!isLoggedIn) return; // 
+
     async function fetchBudgets() {
       try {
         const res = await getBudgets(year, month);
@@ -63,10 +65,12 @@ export default function App() {
       }
     }
     fetchBudgets();
-  }, [reload, year, month]);
+  }, [isLoggedIn, reload, year, month]);
 
   // 지출 조회
   useEffect(() => {
+    if (!isLoggedIn) return;
+
     async function fetchExpenses() {
       try {
         const res = await getExpenses(year, month);
@@ -76,7 +80,8 @@ export default function App() {
       }
     }
     fetchExpenses();
-  }, [reload, year, month]);
+  }, [isLoggedIn, reload, year, month]);
+
 
   const handleSave = () => setReload((prev) => !prev);
   const handleLoginSuccess = () => setIsLoggedIn(true);
