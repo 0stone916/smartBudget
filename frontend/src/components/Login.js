@@ -16,7 +16,7 @@ function Login({ onLoginSuccess, onShowRegister }) {
       console.log(response);
       
       const token = response.data.data;
-      localStorage.setItem("jwtToken", token);
+      sessionStorage.setItem("jwtToken", token);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       onLoginSuccess();
     } catch (err) {

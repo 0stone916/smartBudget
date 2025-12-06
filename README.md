@@ -32,7 +32,7 @@ SmartBudget은 React와 Spring Boot로 구축한 개인 예산 관리 서비스�
 1) 회원가입 / 로그인
 
 - 로그인 성공 시 서버에서 JWT 발급
-- 프론트 엔드(localStorage)에서 JWT 저장 및 자동 전송
+- 프론트 엔드(sessionStorage)에서 JWT 저장 및 자동 전송
 - JWT 만료 시 자동 로그아웃 처리
 
 2) 예산/지출 관리(CRUD)
