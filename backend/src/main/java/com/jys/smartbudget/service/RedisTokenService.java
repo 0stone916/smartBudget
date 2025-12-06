@@ -12,7 +12,7 @@ public class RedisTokenService {
 
     private final StringRedisTemplate redisTemplate;
 
-    private static final long EXPIRATION_HOURS = 1; // JWT 만료시간과 동일하게
+    private static final long EXPIRATION_HOURS = 1000 * 60 * 60; ; // JWT 만료시간과 동일하게
 
     public void saveToken(String userId, String token) {
         redisTemplate.opsForValue().set(userId, token, Duration.ofHours(EXPIRATION_HOURS));
@@ -22,7 +22,7 @@ public class RedisTokenService {
         return redisTemplate.opsForValue().get(userId);
     }
 
-    public void deleteToken(String userId) {        //아직 미사용
+    public void deleteToken(String userId) {      
         redisTemplate.delete(userId);
     }
 }
