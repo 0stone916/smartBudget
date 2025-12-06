@@ -2,5 +2,10 @@
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "automatic",
     "java.debug.settings.onBuildFailureProceed": true,
-    "java.debug.settings.showStaticVariables": true
+    "java.debug.settings.showStaticVariables": true,
+
+    // Gradle 관련 설정 추가
+    "java.import.gradle.enabled": true,
+    "java.import.gradle.autoDetection": "on",
+    "java.configuration.checkProjectSettingsExclusions": false
 }
