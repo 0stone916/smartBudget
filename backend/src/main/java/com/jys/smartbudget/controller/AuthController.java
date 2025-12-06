@@ -53,4 +53,22 @@ public class AuthController {
                     .body(new ApiResponse(false, "회원가입 실패: " + e.getMessage(), null));
         }
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout(@RequestHeader("Authorization") String authHeader) {
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "잘못된 요청입니다.", null));
+        }
+
+        String token = authHeader.substring(7);
+        String userId = JwtUtil.extractUserId(token); // JWT에서 userId 추출
+
+        // Redis에서 해당 유저 토큰 삭제
+        redisTokenService.deleteToken(userId);
+
+        return ResponseEntity.ok(new ApiResponse(true, "로그아웃 성공", null));
+}
+
 }

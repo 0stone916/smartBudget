@@ -6,6 +6,7 @@ import ExpenseList from "./components/ExpenseList";
 import ExpensePieChart from "./components/ExpensePieChart";
 import Login from "./components/Login";
 import Register from "./components/Register";
+import { logout } from "./api/authApi";
 
 import { getBudgets, deleteBudget } from "./api/budgetApi";
 import { getExpenses, deleteExpense } from "./api/expenseApi";
@@ -79,10 +80,18 @@ export default function App() {
 
   const handleSave = () => setReload((prev) => !prev);
   const handleLoginSuccess = () => setIsLoggedIn(true);
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logout(); // 서버 로그아웃
+    } catch (e) {
+      console.error("로그아웃 요청 실패:", e);
+    }
+
+    // 클라이언트 토큰 삭제
     localStorage.removeItem("jwtToken");
     setIsLoggedIn(false);
   };
+
 
   const handleDeleteBudget = async (id) => {
     try {
