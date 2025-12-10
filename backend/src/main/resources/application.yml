@@ -38,8 +38,9 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
-
- 
+jwt:
+  # 환경변수에서 읽음, 없으면 JwtKeyConfig에서 에러발생
+  secret: ${JWT_SECRET}
 
 
 
