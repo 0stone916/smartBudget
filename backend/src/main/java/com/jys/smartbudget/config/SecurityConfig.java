@@ -19,6 +19,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final RedisTokenService redisTokenService;
+    private final JwtUtil jwtUtil;
 
     /**
      * BCryptPasswordEncoder: 비밀번호를 암호화하는 도구
@@ -39,7 +40,7 @@ public class SecurityConfig {
      */
     @Bean
     public JwtAuthFilter jwtAuthFilter() {
-        return new JwtAuthFilter(redisTokenService);
+        return new JwtAuthFilter(redisTokenService, jwtUtil);
     }
 
     /**

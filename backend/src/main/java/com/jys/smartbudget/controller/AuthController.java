@@ -18,6 +18,7 @@ public class AuthController {
 
     private final UserService userService;
     private final RedisTokenService redisTokenService;
+    private final JwtUtil jwtUtil;
 
     /**
      * 로그인 API: POST /auth/login
@@ -40,7 +41,7 @@ public class AuthController {
         if (loginUser != null) {
             // 2. 로그인 성공 → JWT 토큰 생성
             // JwtUtil.generateToken()은 userId를 JWT에 담아 서명된 토큰 생성
-            String token = JwtUtil.generateToken(loginUser.getUserId());
+            String token = jwtUtil.generateAccessToken(loginUser.getUserId());
 
             // 3. Redis에 토큰 저장
             // Key: userId, Value: 방금 생성한 토큰
@@ -108,7 +109,7 @@ public class AuthController {
         String token = authHeader.substring(7);
         
         // 토큰에서 userId 추출
-        String userId = JwtUtil.extractUserId(token);
+        String userId = jwtUtil.extractUserId(token);
 
         // Redis에서 해당 유저의 토큰 삭제
         // 이제 이 토큰으로 API 요청하면 JwtAuthFilter에서 차단됨

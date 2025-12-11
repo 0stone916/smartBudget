@@ -6,7 +6,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -14,15 +13,20 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@RequiredArgsConstructor
 // OncePerRequestFilter: Spring이 제공하는 필터 기본 클래스
 // 한 번의 요청당 딱 한 번만 실행되도록 보장해줌 (중복 실행 방지)
 // 템플릿 메서드 패턴: 부모가 전체 흐름을 제어하고, 내가 세부 구현만 채우면 됨
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     // Redis에서 토큰을 조회/저장/삭제하는 서비스
-    // final로 선언했기 때문에 @RequiredArgsConstructor가 자동으로 생성자 주입해줌
     private final RedisTokenService redisTokenService;
+
+    private final JwtUtil jwtUtil;
+
+    public JwtAuthFilter(RedisTokenService redisTokenService, JwtUtil jwtUtil ) {
+        this.redisTokenService = redisTokenService;
+        this.jwtUtil = jwtUtil;
+    }
 
     /**
      * shouldNotFilter: 이 필터를 "실행하지 않을" 조건을 정의
@@ -73,7 +77,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             // 3. JWT 토큰에서 userId 추출
             // JWT는 서명되어 있어서 위조 불가능 (SECRET_KEY로 검증)
             // 토큰이 변조되었으면 여기서 JwtException 발생
-            String userId = JwtUtil.extractUserId(token);
+            String userId = jwtUtil.extractUserId(token);
 
             // 4. Redis에서 이 사용자의 최신 토큰 가져오기
             // Redis 구조: Key=userId, Value=최신토큰
