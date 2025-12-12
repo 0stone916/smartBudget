@@ -3,6 +3,7 @@ package com.jys.smartbudget.config;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,8 @@ public class JwtUtil {
     JwtUtil 내부에서 jwtKey 로 JWT 서명/검증에 사용 */
     public String generateAccessToken(String userId) {
         Date now = new Date();
-        Date exp = new Date(now.getTime() + 1000L * 60 * 10);
+        Date exp = new Date(now.toInstant().plus(Duration.ofMinutes(1)).toEpochMilli());
+
 
         return Jwts.builder()
                 .setSubject(userId)
@@ -35,6 +37,19 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generateRefreshToken(String userId) {
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + 1000L * 60 * 60 * 24 * 7); // 7일
+
+        return Jwts.builder()
+                .setSubject(userId)
+                .setIssuedAt(now)
+                .setExpiration(exp)
+                .signWith(jwtKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+
     public String extractUserId(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(jwtKey)   
@@ -42,5 +57,14 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public String extractUserIdAllowExpired(String token) {
+        try {
+            return extractUserId(token); // 기존 (정상)
+        } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+            // 만료된 토큰의 claims는 exception.getClaims()로 얻을 수 있음
+            return ex.getClaims().getSubject();
+        }
     }
 }

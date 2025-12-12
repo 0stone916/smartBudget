@@ -77,11 +77,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             // 3. JWT 토큰에서 userId 추출
             // JWT는 서명되어 있어서 위조 불가능 (SECRET_KEY로 검증)
             // 토큰이 변조되었으면 여기서 JwtException 발생
-            String userId = jwtUtil.extractUserId(token);
+            String userId = jwtUtil.extractUserIdAllowExpired(token);
 
             // 4. Redis에서 이 사용자의 최신 토큰 가져오기
             // Redis 구조: Key=userId, Value=최신토큰
-            String savedToken = redisTokenService.getToken(userId);
+            String savedToken = redisTokenService.getAccessToken(userId);
 
             // 5. 단일 세션 검증: Redis 토큰과 현재 요청 토큰 비교
             // savedToken이 null → 로그아웃했거나 Redis에 토큰 없음

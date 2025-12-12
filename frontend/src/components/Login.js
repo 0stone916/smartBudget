@@ -14,10 +14,17 @@ function Login({ onLoginSuccess, onShowRegister }) {
     try {
       const response = await login(userId, password);
       console.log(response);
-      
-      const token = response.data.data;
-      sessionStorage.setItem("jwtToken", token);
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      const accessToken = response.data.data.accessToken;
+      const refreshToken = response.data.data.refreshToken;
+
+      // 세션 저장
+      sessionStorage.setItem("accessToken", accessToken);
+      sessionStorage.setItem("refreshToken", refreshToken);
+
+      // axios 기본 헤더 등록
+      api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+
       onLoginSuccess();
     } catch (err) {
       if (err.response?.data?.message) {
@@ -27,6 +34,7 @@ function Login({ onLoginSuccess, onShowRegister }) {
       }
     }
   };
+
 
   const containerStyle = {
     width: "400px",

@@ -48,7 +48,7 @@ export default function App() {
 
   // 초기 로그인 체크
   useEffect(() => {
-    const token = sessionStorage.getItem("jwtToken");
+    const token = sessionStorage.getItem("accessToken");
     if (token) setIsLoggedIn(true);
   }, []);
 
@@ -93,7 +93,7 @@ export default function App() {
     }
 
     // 클라이언트 토큰 삭제
-    sessionStorage.removeItem("jwtToken");
+    sessionStorage.removeItem("accessToken");
     setIsLoggedIn(false);
   };
 

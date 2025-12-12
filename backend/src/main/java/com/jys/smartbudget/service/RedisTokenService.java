@@ -3,7 +3,6 @@ package com.jys.smartbudget.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 
 @Service
@@ -11,18 +10,36 @@ import java.time.Duration;
 public class RedisTokenService {
 
     private final StringRedisTemplate redisTemplate;
+    private static final Duration ACCESS_TOKEN_EXP = Duration.ofMinutes(1);
 
-    private static final long EXPIRATION_HOURS = 1000 * 60 * 60; ; // JWT 만료시간과 동일하게
+    private String accessKey(String userId) { return "access:" + userId; }
+    private String refreshKey(String userId) { return "refresh:" + userId; }
 
-    public void saveToken(String userId, String token) {
-        redisTemplate.opsForValue().set(userId, token, Duration.ofHours(EXPIRATION_HOURS));
+    public void saveAccessToken(String userId, String token) {
+        redisTemplate.opsForValue().set(accessKey(userId), token, ACCESS_TOKEN_EXP);
     }
 
-    public String getToken(String userId) {
-        return redisTemplate.opsForValue().get(userId);
+    public String getAccessToken(String userId) {
+        return redisTemplate.opsForValue().get(accessKey(userId));
     }
 
-    public void deleteToken(String userId) {      
-        redisTemplate.delete(userId);
+    public void deleteAccessToken(String userId) {
+        redisTemplate.delete(accessKey(userId));
+    }
+
+    public void saveRefreshToken(String userId, String refreshToken) {
+        redisTemplate.opsForValue().set(
+            refreshKey(userId),
+            refreshToken,
+            Duration.ofDays(7)
+        );
+    }
+
+    public String getRefreshToken(String userId) {
+        return redisTemplate.opsForValue().get(refreshKey(userId));
+    }
+
+    public void deleteRefreshToken(String userId) {
+        redisTemplate.delete(refreshKey(userId));
     }
 }

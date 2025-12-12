@@ -1,5 +1,8 @@
 package com.jys.smartbudget.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import com.jys.smartbudget.dto.ApiResponse;
@@ -41,17 +44,23 @@ public class AuthController {
         if (loginUser != null) {
             // 2. 로그인 성공 → JWT 토큰 생성
             // JwtUtil.generateToken()은 userId를 JWT에 담아 서명된 토큰 생성
-            String token = jwtUtil.generateAccessToken(loginUser.getUserId());
-
+            String accessToken = jwtUtil.generateAccessToken(user.getUserId().toString());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getUserId().toString());
+            
             // 3. Redis에 토큰 저장
             // Key: userId, Value: 방금 생성한 토큰
             // 같은 userId로 다시 로그인하면 기존 토큰이 덮어씌워짐
             // → 이전 기기의 토큰은 자동으로 무효화됨 (단일 세션의 핵심)
-            redisTokenService.saveToken(loginUser.getUserId(), token);
+            redisTokenService.saveAccessToken(loginUser.getUserId(), accessToken);
+            redisTokenService.saveRefreshToken(loginUser.getUserId(), refreshToken);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("accessToken", accessToken);
+            result.put("refreshToken", refreshToken);
 
             // 4. 클라이언트에게 성공 응답 + 토큰 전달
             // ApiResponse: {success: true, message: "로그인 성공", data: "토큰"}
-            return ResponseEntity.ok(new ApiResponse(true, "로그인 성공", token));
+            return ResponseEntity.ok(new ApiResponse(true, "로그인 성공", result));
         }
 
         // 5. 로그인 실패 (아이디/비밀번호 불일치)
@@ -109,13 +118,46 @@ public class AuthController {
         String token = authHeader.substring(7);
         
         // 토큰에서 userId 추출
-        String userId = jwtUtil.extractUserId(token);
+        String userId = jwtUtil.extractUserIdAllowExpired(token);
 
         // Redis에서 해당 유저의 토큰 삭제
         // 이제 이 토큰으로 API 요청하면 JwtAuthFilter에서 차단됨
         // (Redis에 토큰이 없으므로 savedToken == null)
-        redisTokenService.deleteToken(userId);
+        redisTokenService.deleteAccessToken(userId);
+        redisTokenService.deleteRefreshToken(userId);
 
         return ResponseEntity.ok(new ApiResponse(true, "로그아웃 성공", null));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+
+        if (refreshToken == null) {
+            return ResponseEntity.status(401).body("Refresh token missing");
+        }
+
+        String userId;
+        try {
+            userId = jwtUtil.extractUserIdAllowExpired(refreshToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid refresh token");
+        }
+
+        // Redis에 저장된 기존 Refresh Token 가져오기
+        String storedToken = redisTokenService.getRefreshToken(userId);
+
+        if (storedToken == null || !storedToken.equals(refreshToken)) {
+            return ResponseEntity.status(401).body("Refresh token expired or invalid");
+        }
+
+        // 새 access 발급 + redis 갱신
+        String newAccessToken = jwtUtil.generateAccessToken(userId);
+        redisTokenService.saveAccessToken(userId, newAccessToken);
+
+        Map<String, String> result = new HashMap<>();
+        result.put("accessToken", newAccessToken);
+
+        return ResponseEntity.ok(result);
     }
 }
