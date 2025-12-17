@@ -20,6 +20,8 @@ public class BudgetDTO extends PageRequestDTO {
     private String budgetDescription; // 상세설명
     private String userId;          // 유저아이디
     private String categoryDescription; // 카테고리 설명
+
+    private Integer version;         //Optimistic Lock용
     
 
 }

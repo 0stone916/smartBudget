@@ -18,6 +18,7 @@
             b.month, 
             b.description AS budgetDescription,
             b.user_id,
+            b.version,
             c.description AS categoryDescription
         FROM budget b
         LEFT JOIN category c ON b.category = c.code
@@ -40,9 +41,11 @@
             amount = #{amount},
             year = #{year},
             month = #{month},
-            description = #{budgetDescription}
+            description = #{budgetDescription},
+            version = version + 1
         WHERE id = #{id}
           AND user_id = #{userId}
+          AND version = #{version}
     </update>
 
     <delete id="deleteBudget">

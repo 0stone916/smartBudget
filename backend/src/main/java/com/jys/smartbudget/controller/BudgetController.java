@@ -3,10 +3,10 @@ package com.jys.smartbudget.controller;
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.service.BudgetService;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -56,15 +56,20 @@ public class BudgetController {
 
     // 예산 수정
     @PutMapping
-    public String updateBudget(
+    public ResponseEntity<ApiResponse> updateBudget(
             HttpServletRequest req,
             @RequestBody BudgetDTO budget) {
 
         String userId = (String) req.getAttribute("userId");
         budget.setUserId(userId);
-
-        budgetService.updateBudget(budget);
-        return "예산이 수정되었습니다.";
+        try {
+            budgetService.updateBudget(budget);
+            return ResponseEntity.ok(new ApiResponse(true, "예산 수정 완료", null));
+        } catch (OptimisticLockException e) {
+            return ResponseEntity.ok(
+                new ApiResponse(false, "이미 수정된 요청입니다.", null)
+            );
+        }
     }
 
     // 예산 삭제

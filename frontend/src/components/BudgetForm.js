@@ -39,6 +39,7 @@ export default function BudgetForm({ selectedBudget, onSave, year, month, budget
     category: "",
     amount: "",
     budgetDescription: "",
+    version: null,   
   });
 
   // 카테고리 코드 목록
@@ -55,9 +56,16 @@ export default function BudgetForm({ selectedBudget, onSave, year, month, budget
     if (selectedBudget) {
       setForm(selectedBudget);
     } else {
-      setForm({ category: "", amount: "", budgetDescription: "" });
+      setForm({
+        id: null,
+        category: "",
+        amount: "",
+        budgetDescription: "",
+        version: null,
+      });
     }
   }, [selectedBudget]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;

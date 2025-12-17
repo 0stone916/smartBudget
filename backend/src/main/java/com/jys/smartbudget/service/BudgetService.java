@@ -2,8 +2,9 @@ package com.jys.smartbudget.service;
 
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.mapper.BudgetMapper;
+import jakarta.persistence.OptimisticLockException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -23,8 +24,13 @@ public class BudgetService {
         return budgetMapper.selectBudgetsByConditionWithPaging(condition);
     }
 
+    @Transactional
     public void updateBudget(BudgetDTO budget) {
-        budgetMapper.updateBudget(budget);
+        int updatedCount = budgetMapper.updateBudget(budget);
+
+        if (updatedCount == 0) {
+            throw new OptimisticLockException("이미 수정된 데이터입니다.");
+        }
     }
 
     public void deleteBudget(Long id, String userId) {

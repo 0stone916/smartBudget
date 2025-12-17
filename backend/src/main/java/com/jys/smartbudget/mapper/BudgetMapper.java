@@ -8,7 +8,7 @@ import java.util.List;
 public interface BudgetMapper {
     void insertBudget(BudgetDTO budget);
     List<BudgetDTO> selectBudgetsByConditionWithPaging(BudgetDTO condition);
-    void updateBudget(BudgetDTO budget);
+    int updateBudget(BudgetDTO budget);
     void deleteBudget(Long id, String userId);
     Boolean existsByYearMonthCategory(BudgetDTO budget);
 
