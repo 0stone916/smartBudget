@@ -13,6 +13,7 @@
         e.amount,
         e.day,
         e.description AS description,
+        e.version,
         c.description AS category
         FROM expense e
         LEFT JOIN budget b ON b.id = e.budget_id
@@ -40,8 +41,11 @@
             description = #{description},
             year = #{year},
             month = #{month},
-            day = #{day}
-        WHERE id = #{id} AND user_id = #{userId}
+            day = #{day},
+            version = version + 1
+        WHERE id = #{id}
+          AND user_id = #{userId}
+          AND version = #{version}
     </update>
 
     <!-- 지출 삭제 (PK + userId 체크) -->

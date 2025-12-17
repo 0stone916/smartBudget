@@ -12,7 +12,7 @@ public interface ExpenseMapper {
 
     void insertExpense(ExpenseDTO expense);
 
-    void updateExpense(ExpenseDTO expense);
+    int updateExpense(ExpenseDTO expense);
 
     void deleteExpenseByIdAndUserId(Long id, String userId);
 

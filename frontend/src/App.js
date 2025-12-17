@@ -58,8 +58,8 @@ export default function App() {
 
     async function fetchBudgets() {
       try {
-        const res = await getBudgets(year, month);
-        setBudgets(res.data);
+        const response = await getBudgets(year, month);
+        setBudgets(response.data.data);
       } catch (error) {
         console.error("예산 조회 실패", error);
       }
@@ -73,8 +73,8 @@ export default function App() {
 
     async function fetchExpenses() {
       try {
-        const res = await getExpenses(year, month);
-        setExpenses(res.data);
+        const response = await getExpenses(year, month);
+        setExpenses(response.data.data);
       } catch (error) {
         console.error("지출 조회 실패", error);
       }

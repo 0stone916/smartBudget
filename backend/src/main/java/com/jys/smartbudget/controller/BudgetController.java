@@ -21,66 +21,80 @@ public class BudgetController {
 
     // 예산 등록
     @PostMapping
-    public ResponseEntity<ApiResponse> insertBudget(
+    public ResponseEntity<ApiResponse<Void>> insertBudget(
             HttpServletRequest req,
             @RequestBody BudgetDTO budget) {
 
         String userId = (String) req.getAttribute("userId");
         budget.setUserId(userId);
 
-        boolean exists = budgetService.existsByYearMonthCategory(budget);
-        if (exists) {
-            return ResponseEntity.ok(new ApiResponse(false, "이미 등록된 카테고리입니다.", null));
+        if (budgetService.existsByYearMonthCategory(budget)) {
+            return ResponseEntity.ok(
+                new ApiResponse<>(false, "이미 등록된 카테고리입니다.", null)
+            );
         }
 
         budgetService.insertBudget(budget);
-        return ResponseEntity.ok(new ApiResponse(true, "예산 등록 완료", null));
+        return ResponseEntity.ok(
+            new ApiResponse<>(true, "예산 등록 완료", null)
+        );
     }
 
     // 예산 조회
     @GetMapping("/search")
-    public List<BudgetDTO> searchBudgets(
+    public ResponseEntity<ApiResponse<List<BudgetDTO>>> searchBudgets(
             HttpServletRequest req,
             @RequestParam Integer year,
             @RequestParam Integer month) {
 
         String userId = (String) req.getAttribute("userId");
 
-        BudgetDTO budget = new BudgetDTO();
-        budget.setUserId(userId);
-        budget.setYear(year);
-        budget.setMonth(month);
+        BudgetDTO condition = new BudgetDTO();
+        condition.setUserId(userId);
+        condition.setYear(year);
+        condition.setMonth(month);
 
-        return budgetService.selectBudgetsByConditionWithPaging(budget);
+        List<BudgetDTO> budgets =
+                budgetService.selectBudgetsByConditionWithPaging(condition);
+
+        return ResponseEntity.ok(
+            new ApiResponse<>(true, "조회 성공", budgets)
+        );
     }
 
     // 예산 수정
     @PutMapping
-    public ResponseEntity<ApiResponse> updateBudget(
+    public ResponseEntity<ApiResponse<Void>> updateBudget(
             HttpServletRequest req,
             @RequestBody BudgetDTO budget) {
 
         String userId = (String) req.getAttribute("userId");
         budget.setUserId(userId);
+
         try {
             budgetService.updateBudget(budget);
-            return ResponseEntity.ok(new ApiResponse(true, "예산 수정 완료", null));
+            return ResponseEntity.ok(
+                new ApiResponse<>(true, "예산 수정 완료", null)
+            );
         } catch (OptimisticLockException e) {
             return ResponseEntity.ok(
-                new ApiResponse(false, "이미 수정된 요청입니다.", null)
+                new ApiResponse<>(false, "이미 수정된 요청입니다.", null)
             );
         }
     }
 
     // 예산 삭제
     @DeleteMapping("/{id}")
-    public String deleteBudget(
+    public ResponseEntity<ApiResponse<Void>> deleteBudget(
             HttpServletRequest req,
             @PathVariable Long id) {
 
         String userId = (String) req.getAttribute("userId");
 
         budgetService.deleteBudget(id, userId);
-        return "예산이 삭제되었습니다.";
+
+        return ResponseEntity.ok(
+            new ApiResponse<>(true, "예산 삭제 완료", null)
+        );
     }
 }

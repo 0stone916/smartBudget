@@ -18,4 +18,7 @@ public class ExpenseDTO {
     private Integer month;
     private Integer day;
     private String userId;    // 유저
+
+    private Integer version;         //Optimistic Lock용
+
 }

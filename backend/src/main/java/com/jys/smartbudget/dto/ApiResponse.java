@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ApiResponse {
+public class ApiResponse<T> {
     private boolean success;        //호출 성공여부
     private String message;         //메세지
     private Object data;            //응답 데이터
