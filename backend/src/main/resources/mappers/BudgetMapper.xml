@@ -5,7 +5,7 @@
 
 <mapper namespace="com.jys.smartbudget.mapper.BudgetMapper">
 
-    <insert id="insertBudget">
+    <insert id="insertBudget" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO budget (user_id, category, amount, year, month, description)
         VALUES (#{userId}, #{category}, #{amount}, #{year}, #{month}, #{budgetDescription})
     </insert>
@@ -56,6 +56,23 @@
 
     <select id="existsByYearMonthCategory">
     SELECT COUNT(*) FROM budget WHERE year=#{year} AND month=#{month} AND category=#{category}
+    </select>
+
+    <!-- //Optimistic Lock 테스트용  -->
+    <select id="selectById" resultType="com.jys.smartbudget.dto.BudgetDTO">
+        SELECT 
+            b.id,
+            b.user_id,
+            b.category,
+            b.amount,
+            b.year,
+            b.month,
+            b.description AS budgetDescription,
+            b.version,
+            c.description AS categoryDescription
+        FROM budget b
+        LEFT JOIN category c ON b.category = c.code
+        WHERE b.id = #{id}
     </select>
 
 </mapper>

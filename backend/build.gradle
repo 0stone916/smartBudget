@@ -47,10 +47,27 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // Lombok (test)
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+    //Optimistic Lock 테스트 시 사용
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+//Optimistic Lock 테스트 시 사용
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        showStandardStreams = true
+        events "passed", "failed", "skipped"
+    }
 }

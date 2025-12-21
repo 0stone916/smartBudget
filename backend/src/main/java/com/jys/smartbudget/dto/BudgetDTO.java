@@ -21,7 +21,7 @@ public class BudgetDTO extends PageRequestDTO {
     private String userId;          // 유저아이디
     private String categoryDescription; // 카테고리 설명
 
-    private Integer version;         //Optimistic Lock용
+    private Integer version = 0; //Optimistic Lock용 // 선언과 동시에 0으로 초기화(Optimistic Lock 테스트 시 version가져오기 위해)
     
 
 }
