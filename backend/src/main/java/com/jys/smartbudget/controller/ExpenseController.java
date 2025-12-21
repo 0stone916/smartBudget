@@ -35,8 +35,9 @@ public class ExpenseController {
 
         List<ExpenseDTO> result = expenseService.searchExpenses(expense);
 
+
         return ResponseEntity.ok(
-                new ApiResponse<>(true, "지출 조회 성공", result)
+                ApiResponse.success("지출 조회 성공", result)
         );
     }
 
@@ -46,29 +47,22 @@ public class ExpenseController {
             HttpServletRequest req,
             @RequestBody ExpenseDTO expense) {
 
-        try {
-            String userId = (String) req.getAttribute("userId");
-            expense.setUserId(userId);
+        String userId = (String) req.getAttribute("userId");
+        expense.setUserId(userId);
 
-            expenseService.insertExpense(expense);
+        expenseService.insertExpense(expense);
 
-            boolean overBudget = expenseService.checkOverBudget(expense);
+        boolean overBudget = expenseService.checkOverBudget(expense);
 
-            if (overBudget) {
-                return ResponseEntity.ok(
-                        new ApiResponse<>(true, "해당 예산을 초과했습니다.", null)
-                );
-            }
-
+        if (overBudget) {
             return ResponseEntity.ok(
-                    new ApiResponse<>(true, "지출이 등록되었습니다.", null)
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponse<>(false, "지출 등록 중 오류가 발생했습니다.", null)
+                ApiResponse.success("해당 예산을 초과했습니다.")
             );
         }
+
+        return ResponseEntity.ok(
+                ApiResponse.success("지출 등록 완료")
+        );
     }
 
     // 지출 수정
@@ -80,16 +74,12 @@ public class ExpenseController {
         String userId = (String) req.getAttribute("userId");
         expense.setUserId(userId);
 
-        try {
-            expenseService.updateExpense(expense);
-            return ResponseEntity.ok(
-                new ApiResponse<>(true, "지출 수정 완료", null)
-            );
-        } catch (OptimisticLockException e) {
-            return ResponseEntity.ok(
-                new ApiResponse<>(false, "이미 수정된 요청입니다.", null)
-            );
-        }
+        expenseService.updateExpense(expense);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("지출 수정 완료")
+        );
+
     }
 
     // 지출 삭제
@@ -103,7 +93,7 @@ public class ExpenseController {
         expenseService.deleteExpense(id, userId);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(true, "지출 삭제 완료", null)
+                ApiResponse.success("지출 삭제 완료")
         );
     }
 }

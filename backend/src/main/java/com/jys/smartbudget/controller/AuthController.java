@@ -60,13 +60,13 @@ public class AuthController {
 
             // 4. 클라이언트에게 성공 응답 + 토큰 전달
             // ApiResponse: {success: true, message: "로그인 성공", data: "토큰"}
-            return ResponseEntity.ok(new ApiResponse(true, "로그인 성공", result));
+            return ResponseEntity.ok(ApiResponse.success("로그인 성공", result));
         }
 
         // 5. 로그인 실패 (아이디/비밀번호 불일치)
         // 401 Unauthorized 상태코드 반환
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponse(false, "아이디 또는 비밀번호가 틀렸습니다.", null));
+                .body(ApiResponse.fail("아이디 또는 비밀번호가 틀렸습니다."));
     }
 
     /**
@@ -77,22 +77,11 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@RequestBody UserDTO user) {
-        try {
-            // UserService에서 비밀번호 암호화 후 DB에 저장
-            userService.register(user);
-            return ResponseEntity.ok(new ApiResponse(true, "회원가입 성공", null));
 
-        } catch (DuplicateKeyException e) {
-            // userId가 이미 존재하는 경우
-            // 409 Conflict 상태코드 반환
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(new ApiResponse(false, "이미 존재하는 아이디입니다.", null));
-
-        } catch (Exception e) {
-            // 기타 예외 처리
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false, "회원가입 실패: " + e.getMessage(), null));
-        }
+        // UserService에서 비밀번호 암호화 후 DB에 저장
+        userService.register(user);
+        
+        return ResponseEntity.ok(ApiResponse.success("회원가입 성공"));
     }
 
     /**
@@ -110,7 +99,7 @@ public class AuthController {
         // Authorization 헤더 검증
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse(false, "잘못된 요청입니다.", null));
+                    .body(ApiResponse.fail("잘못된 요청입니다."));
         }
 
         // "Bearer " 제거하고 순수 토큰만 추출
@@ -126,7 +115,8 @@ public class AuthController {
         redisTokenService.deleteAccessToken(userId);
         redisTokenService.deleteRefreshToken(userId);
 
-        return ResponseEntity.ok(new ApiResponse(true, "로그아웃 성공", null));
+        return ResponseEntity.ok(ApiResponse.success("로그아웃 성공")
+        );
     }
 
     @PostMapping("/refresh")

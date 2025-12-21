@@ -3,7 +3,6 @@ package com.jys.smartbudget.controller;
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.service.BudgetService;
-import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,15 +27,9 @@ public class BudgetController {
         String userId = (String) req.getAttribute("userId");
         budget.setUserId(userId);
 
-        if (budgetService.existsByYearMonthCategory(budget)) {
-            return ResponseEntity.ok(
-                new ApiResponse<>(false, "이미 등록된 카테고리입니다.", null)
-            );
-        }
-
         budgetService.insertBudget(budget);
         return ResponseEntity.ok(
-            new ApiResponse<>(true, "예산 등록 완료", null)
+                ApiResponse.success("예산 등록 완료")
         );
     }
 
@@ -58,7 +51,7 @@ public class BudgetController {
                 budgetService.selectBudgetsByConditionWithPaging(condition);
 
         return ResponseEntity.ok(
-            new ApiResponse<>(true, "조회 성공", budgets)
+                ApiResponse.success("조회 성공", budgets)
         );
     }
 
@@ -71,16 +64,12 @@ public class BudgetController {
         String userId = (String) req.getAttribute("userId");
         budget.setUserId(userId);
 
-        try {
-            budgetService.updateBudget(budget);
-            return ResponseEntity.ok(
-                new ApiResponse<>(true, "예산 수정 완료", null)
-            );
-        } catch (OptimisticLockException e) {
-            return ResponseEntity.ok(
-                new ApiResponse<>(false, "이미 수정된 요청입니다.", null)
-            );
-        }
+        budgetService.updateBudget(budget);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("예산 수정 완료")
+        );
+        
     }
 
     // 예산 삭제
@@ -94,7 +83,7 @@ public class BudgetController {
         budgetService.deleteBudget(id, userId);
 
         return ResponseEntity.ok(
-            new ApiResponse<>(true, "예산 삭제 완료", null)
+                ApiResponse.success("예산 삭제 완료")
         );
     }
 }
