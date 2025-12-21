@@ -12,5 +12,5 @@ public interface BudgetMapper {
     void deleteBudget(Long id, String userId);
     Boolean existsByYearMonthCategory(BudgetDTO budget);
 
-    BudgetDTO selectById(Long id);
+    BudgetDTO selectById(Long id);      //Optimistic Lock 테스트 시 사용
 }
