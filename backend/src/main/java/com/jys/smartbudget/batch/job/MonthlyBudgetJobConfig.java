@@ -1,9 +1,8 @@
 package com.jys.smartbudget.batch.job;
 
-import com.jys.smartbudget.dto.BatchBudgetFailHistory;
+import com.jys.smartbudget.batch.listener.BatchSkipListener;
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.dto.ExpenseDTO;
-import com.jys.smartbudget.mapper.BatchBudgetFailHistoryMapper;
 import com.jys.smartbudget.mapper.BudgetMapper;
 import com.jys.smartbudget.mapper.ExpenseMapper;
 import com.jys.smartbudget.mapper.UserMapper;
@@ -21,7 +20,6 @@ import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +35,7 @@ public class MonthlyBudgetJobConfig {
     private final BudgetMapper budgetMapper;
     private final BudgetService budgetService;
     private final UserMapper userMapper;  
-    private final BatchBudgetFailHistoryMapper batchBudgetFailHistoryMapper;  
+    private final BatchSkipListener batchSkipListener;  
 
     @Bean
     public Job monthlyBudgetJob(JobRepository jobRepository, Step calculateMonthlyExpenseStep) {
@@ -53,6 +51,10 @@ public class MonthlyBudgetJobConfig {
                 .reader(userItemReader())           
                 .processor(userExpenseProcessor())  
                 .writer(budgetItemWriter())
+                .faultTolerant()              //장애 허용 모드 ON
+                .skip(Exception.class)   // 어떤 예외를 스킵할지
+                .skipLimit(1000)         // 최대 스킵 허용 개수
+                .listener(batchSkipListener)
                 .build();
     }
 
@@ -163,23 +165,8 @@ public class MonthlyBudgetJobConfig {
                         );
                         continue;
                     }
-                    try {
                         budgetMapper.insertBudget(budget);
                         insertCount++;
-                    } catch (Exception e) {
-                        batchBudgetFailHistoryMapper.insert(
-                            BatchBudgetFailHistory.builder()
-                                .jobName("monthlyBudgetJob")
-                                .userId(budget.getUserId())
-                                .year(budget.getYear())
-                                .month(budget.getMonth())
-                                .category(budget.getCategory())
-                                .reason(e.getMessage())
-                                .build()
-                        );
-
-                        log.error("배치 예산 생성 실패", e);
-                    }
                 }
             }
 
