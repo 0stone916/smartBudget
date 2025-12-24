@@ -20,7 +20,7 @@ import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -78,65 +78,66 @@ public class MonthlyBudgetJobConfig {
         return userId -> {
             log.info("사용자 {} 처리 시작", userId);
 
-            // 기준 날짜 계산
-            LocalDate now = LocalDate.now();
-            LocalDate lastMonth = now.minusMonths(1);
-            LocalDate nextMonth = now.plusMonths(1);
+            // 1. 최근 지출 1건 조회 (가장 최신 월 기준)
+            ExpenseDTO latestExpense = expenseMapper.findLatestExpense(userId);
 
-            int lastYear = lastMonth.getYear();
-            int lastMonthValue = lastMonth.getMonthValue();
-
-            int nextYear = nextMonth.getYear();
-            int nextMonthValue = nextMonth.getMonthValue();
-
-            // 1. 지난달 지출 조회
-            ExpenseDTO condition = new ExpenseDTO();
-            condition.setUserId(userId);
-            condition.setYear(lastYear);
-            condition.setMonth(lastMonthValue);
-
-            List<ExpenseDTO> expenses = expenseMapper.searchExpenses(condition);
- 
-            if (expenses.isEmpty()) {
+            if (latestExpense == null) {
                 log.info(" → 지출 내역 없음, 건너뜀");
                 return null;
             }
 
-            // 2. 카테고리별 지출 합계
-            Map<String, Integer> categoryTotals = expenses.stream()
-                .collect(Collectors.groupingBy(
+            int baseYear = latestExpense.getYear();
+            int baseMonth = latestExpense.getMonth();
+
+            YearMonth baseYm = YearMonth.of(baseYear, baseMonth);
+            YearMonth targetYm = baseYm.plusMonths(1);
+
+            // 2. 기준월 지출 전체 조회
+            ExpenseDTO condition = new ExpenseDTO();
+            condition.setUserId(userId);
+            condition.setYear(baseYear);
+            condition.setMonth(baseMonth);
+
+            List<ExpenseDTO> expenses = expenseMapper.searchExpenses(condition);
+
+            // 3. 카테고리별 합계
+            Map<String, Integer> categoryTotals =
+                expenses.stream().collect(Collectors.groupingBy(
                     ExpenseDTO::getCategoryCode,
                     Collectors.summingInt(ExpenseDTO::getAmount)
                 ));
 
-            // 3. 다음달 예산 생성
+            // 4. 다음 달 예산 생성
             List<BudgetDTO> budgets = new ArrayList<>();
 
             for (Map.Entry<String, Integer> entry : categoryTotals.entrySet()) {
                 BudgetDTO budget = new BudgetDTO();
                 budget.setUserId(userId);
                 budget.setCategory(entry.getKey());
-                budget.setAmount(entry.getValue() + 50_000); // 여유 금액
-                budget.setYear(nextYear);
-                budget.setMonth(nextMonthValue);
+                budget.setAmount(entry.getValue() + 50_000);
+                budget.setYear(targetYm.getYear());
+                budget.setMonth(targetYm.getMonthValue());
                 budget.setBudgetDescription(
                     String.format("%d년 %d월 지출 기반 자동 생성",
-                        lastYear, lastMonthValue)
+                        baseYear, baseMonth)
                 );
 
                 budgets.add(budget);
 
                 log.info(
-                    " → [{}] {}원 → {}원",
+                    " → (user={}) [{}] {}원 → {}원",
+                    userId,
                     entry.getKey(),
                     entry.getValue(),
                     budget.getAmount()
                 );
+
             }
 
             return budgets;
         };
     }
+
 
 
     /**
@@ -152,6 +153,12 @@ public class MonthlyBudgetJobConfig {
                 if (budgets == null) continue;
 
                 for (BudgetDTO budget : budgets) {
+
+                    // if ("FOOD".equals(budget.getCategory())                          BatchSkipListener를 통한 BatchBudgetFailHistory 테스트용
+                    //         && "user1".equals(budget.getUserId())) {
+                    //         throw new RuntimeException("강제 실패 테스트");
+                    //     }
+
 
                     // 이미 예산이 존재하면 건너뜀
                     if (budgetService.existsByYearMonthCategory(budget)) {

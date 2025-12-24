@@ -71,5 +71,13 @@
             END AS overBudget
     </select>
 
+    <select id='findLatestExpense'>
+        SELECT year, month
+        FROM expense
+        WHERE user_id = #{userId}
+        ORDER BY year DESC, month DESC
+        LIMIT 1
+    </select>
+
 
 </mapper>

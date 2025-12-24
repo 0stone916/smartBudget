@@ -2,7 +2,6 @@ package com.jys.smartbudget.mapper;
 
 import com.jys.smartbudget.dto.ExpenseDTO;
 import org.apache.ibatis.annotations.Mapper;
-
 import java.util.List;
 
 @Mapper
@@ -18,5 +17,6 @@ public interface ExpenseMapper {
 
     Boolean checkOverBudget(ExpenseDTO expense);
 
+    ExpenseDTO findLatestExpense(String userId);
 
 }
