@@ -1,42 +1,38 @@
-# 📌 SmartBudget – 개인 예산 관리 웹 서비스 (React + Spring Boot) 
-JWT + Redis 기반 단일 세션 인증과 동시성 제어를 구현한
-개인 예산 관리 웹 서비스
+# 📌 SmartBudget – 개인 예산 관리 시스템
+> **데이터 정합성 보장 및 배치 운영 안정성을 강화한 백엔드 설계**
 
-## 🔐 인증 / 보안
-- JWT 기반 인증/인가
-- Access Token + Refresh Token 구조
-- Redis 기반 단일 세션 관리
-- 재로그인 시 기존 세션 즉시 만료
-- Access Token 자동 재발급 처리
-- 다중 로그인, 토큰 탈취 시나리오를 고려해
-  서버 주도 세션 제어 구조로 설계
+JWT + Redis 기반의 서버 주도 세션 제어와 Spring Batch를 활용한 운영 자동화를 구현한 개인 예산 관리 플랫폼입니다.
 
-## 💰 예산 / 지출 관리
-- 예산·지출 CRUD
-- 사용자 + 년·월·카테고리 중복 등록 방지
-- Optimistic Lock 기반 동시 수정 충돌 방지
+## 🛠 Tech Stack
+- **Back-end**: Java 17, Spring Boot, **Spring Batch 5**, **Redis**, MySQL, MyBatis
+- **Front-end**: React, Axios, Chart.js
+- **Tool**: VS Code
 
-## 🧪 테스트 & 안정성
-- 멀티스레드 환경에서 동시 수정 테스트
-- 중복 등록 시 DuplicateKeyException 검증
+---
 
-## ✏️향후 개선 계획
+## 🔐 인증 및 보안 (Security)
+- **Double Token 구조**: Access Token(단기) 및 Refresh Token(장기)을 활용한 보안 강화
+- **Redis 기반 단일 세션 관리**: Redis에 `userId`를 Key로 토큰을 저장하여, **재로그인 시 기존 세션을 즉시 Overwrite(무효화)** 하는 서버 주도 세션 제어 구현
+- **자동 재발급 로직**: Axios 인터셉터를 통해 토큰 만료 시 사용자 개입 없이 자동 재발급 (다중 요청 시 Refresh 요청은 1회만 수행되도록 설계)
+- **로그아웃 실효성**: 로그아웃 시 Redis 내 토큰 데이터를 즉시 삭제하여 Stateless 환경에서도 실시간 세션 차단 기능 확보
 
-### 🔄 예산 자동 생성 기능
+## ⚙️ 운영 자동화 (Spring Batch)
+- **전월 기반 예산 자동 생성**: **Spring Batch 5**를 도입하여 매월 1일 사용자별 지출 패턴을 분석한 예산 수립 자동화
+- **장애 허용 설계(Fault Tolerance)**: `faultTolerant()` 및 `skip` 정책을 적용하여 특정 데이터 오류 시에도 전체 배치 중단 방지
+- **실패 이력 관리**: `BatchSkipListener`를 통해 실패 데이터의 사유를 DB에 기록하여 사후 모니터링 및 복구 기반 마련
+- **멱등성 확보**: 재실행 시 데이터 중복을 방지하기 위해 애플리케이션(`exists`)과 DB(`Unique Key`) 수준의 이중 방어 설계
 
-**목표:**
-사용자 편의성 향상을 위해 지난달 지출 패턴을 분석하여 
-당월 예산을 자동으로 생성하는 기능 구현 예정
+## 💰 데이터 정합성 (Concurrency Control)
+- **Optimistic Lock**: `@Version` 컬럼을 활용한 낙관적 락 적용으로 다중 탭/기기의 동시 수정 충돌 방지
+- **복합 유니크 제약**: `사용자ID + 년 + 월 + 카테고리` 조합의 Unique Key 설정을 통해 물리적 데이터 무결성 확보
+- **공통 응답 표준화**: `ApiResponse` 규격화 및 `GlobalExceptionHandler`를 통한 중앙 집중식 예외 처리 (409 Conflict 등)
 
-**구현 계획:**
-- Spring Batch를 활용한 월별 배치 작업
-- 매월 1일 자동 실행
-- 사용자 카테고리별 지출 집계
-- 예산 자동 생성
+## 🧪 테스트 및 안정성 검증
+- **동시성 실증 테스트**: 멀티스레드 환경에서 N개 이상의 수정 요청 시 **1건만 성공하고 나머지는 예외 발생**함을 `assertThat`으로 검증
+- **중복 등록 차단 검증**: 동일 조건의 예산 등록 시 `DuplicateKeyException` 발생 및 에러 핸들링 여부 테스트
+- **배치 멱등성 테스트**: 배치가 중단된 후 다시 실행되어도 데이터가 중복 생성되지 않음을 직접 확인
 
-**기대 효과:**
-- 매달 예산 입력 번거로움 해소
-- 지출 패턴 기반 예산 책정
+---
 
-## 📘 상세 설계 문서
-👉 https://www.notion.so/2cc2c24577cc80638969fa8cf6d240d5
+## 📘 상세 설계 문서 (Portfolio)
+👉 [SmartBudget 노션 상세 페이지](https://www.notion.so/2cc2c24577cc80638969fa8cf6d240d5)
