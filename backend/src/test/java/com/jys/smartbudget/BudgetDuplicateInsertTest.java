@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DuplicateKeyException;
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.mapper.BudgetMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ class BudgetDuplicateInsertTest {
 
         // When & Then : 해당 의도한 에러가 발생해야 테스트 성공
         assertThatThrownBy(() -> budgetMapper.insertBudget(first))
-                .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
+                .isInstanceOf(DuplicateKeyException.class);
     }
 
     @AfterEach

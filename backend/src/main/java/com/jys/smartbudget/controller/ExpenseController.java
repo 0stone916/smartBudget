@@ -3,7 +3,6 @@ package com.jys.smartbudget.controller;
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.ExpenseDTO;
 import com.jys.smartbudget.service.ExpenseService;
-import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

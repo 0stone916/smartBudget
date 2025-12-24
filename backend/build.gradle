@@ -55,6 +55,12 @@ dependencies {
 
     //Optimistic Lock 테스트 시 사용
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // Spring Batch 핵심 라이브러리 
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+    // Batch 테스트를 위한 라이브러리
+    testImplementation 'org.springframework.batch:spring-batch-test'
 }
 
 

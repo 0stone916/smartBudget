@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jys.smartbudget.mapper.BatchBudgetFailHistoryMapper">
+
+    <insert id="insert" parameterType="com.jys.smartbudget.dto.BatchBudgetFailHistory">
+        INSERT INTO batch_budget_fail_history (
+            job_name,
+            user_id,
+            year,
+            month,
+            category,
+            reason
+        ) VALUES (
+            #{jobName},
+            #{userId},
+            #{year},
+            #{month},
+            #{category},
+            #{reason}
+        )
+    </insert>
+
+</mapper>

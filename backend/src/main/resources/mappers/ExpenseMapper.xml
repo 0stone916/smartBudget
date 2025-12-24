@@ -14,7 +14,8 @@
         e.day,
         e.description AS description,
         e.version,
-        c.description AS category
+        c.description AS category,
+        c.code AS categoryCode
         FROM expense e
         LEFT JOIN budget b ON b.id = e.budget_id
         LEFT JOIN category c ON c.code = b.category 

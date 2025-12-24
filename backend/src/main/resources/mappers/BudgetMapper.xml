@@ -55,7 +55,7 @@
     </delete>
 
     <select id="existsByYearMonthCategory">
-    SELECT COUNT(*) FROM budget WHERE year=#{year} AND month=#{month} AND category=#{category}
+    SELECT COUNT(*) FROM budget WHERE user_id = #{userId} AND year=#{year} AND month=#{month} AND category=#{category}
     </select>
 
     <!-- //Optimistic Lock 테스트용  -->

@@ -18,6 +18,11 @@ spring:
       host: localhost
       port: 6379
 
+  batch:
+    job:
+      enabled: true
+    jdbc:
+      initialize-schema: always
 
 server:
   port: 8080
@@ -41,6 +46,5 @@ mybatis:
 jwt:
   # 환경변수에서 읽음, 없으면 JwtKeyConfig에서 에러발생
   secret: ${JWT_SECRET}
-
 
 
