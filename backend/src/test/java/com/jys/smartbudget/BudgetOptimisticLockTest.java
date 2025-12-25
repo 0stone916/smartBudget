@@ -1,6 +1,7 @@
 package com.jys.smartbudget;
 
 import com.jys.smartbudget.dto.BudgetDTO;
+import com.jys.smartbudget.dto.CategoryDTO;
 import com.jys.smartbudget.mapper.BudgetMapper;
 import com.jys.smartbudget.service.BudgetService;
 import jakarta.persistence.OptimisticLockException;
@@ -11,7 +12,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 //JUnit은 기본적으로 독립성 원칙이므로 테스트 메서드 간 순서가 없음
 //순서를 지정해주고 싶으면 사용: @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class BudgetOptimisticLockTest {
 
     @Autowired
@@ -43,9 +48,12 @@ class BudgetOptimisticLockTest {
         budget.setUserId(userId);
         budget.setYear(2026);
         budget.setMonth(12);
-        budget.setCategoryCode("FOOD");
         budget.setAmount(500_000);
         budget.setDescription("테스트 예산");
+
+        CategoryDTO category = new CategoryDTO();
+        category.setCode("FOOD");
+        budget.setCategory(category);
 
         budgetMapper.insertBudget(budget);
         budgetId = budget.getId();      //쿼리의 useGeneratedKeys="true" keyProperty="id"기능으로 insert된 id 가져옴

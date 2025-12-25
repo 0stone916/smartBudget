@@ -4,15 +4,20 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.test.context.ActiveProfiles;
 import com.jys.smartbudget.dto.BudgetDTO;
+import com.jys.smartbudget.dto.CategoryDTO;
 import com.jys.smartbudget.mapper.BudgetMapper;
 import lombok.extern.slf4j.Slf4j;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Slf4j
+@ActiveProfiles("test")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class BudgetDuplicateInsertTest {
 
     @Autowired
@@ -28,11 +33,14 @@ class BudgetDuplicateInsertTest {
         // Given
         BudgetDTO first = new BudgetDTO();
         first.setUserId(userId);
-        first.setYear(2025);
+        first.setYear(2026);
         first.setMonth(12);
-        first.setCategoryCode("FOOD");
         first.setAmount(500_000);
         first.setDescription("첫 번째 예산");
+
+        CategoryDTO category = new CategoryDTO();
+        category.setCode("FOOD");
+        first.setCategory(category);
 
         budgetMapper.insertBudget(first);
         firstId = first.getId();

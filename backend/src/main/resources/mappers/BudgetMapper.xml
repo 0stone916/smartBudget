@@ -82,7 +82,7 @@
             b.amount,
             b.year,
             b.month,
-            b.description
+            b.description,
             b.version,
             c.code,
             c.name
