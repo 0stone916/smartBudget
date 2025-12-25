@@ -43,9 +43,9 @@ class BudgetOptimisticLockTest {
         budget.setUserId(userId);
         budget.setYear(2026);
         budget.setMonth(12);
-        budget.setCategory("FOOD");
+        budget.setCategoryCode("FOOD");
         budget.setAmount(500_000);
-        budget.setBudgetDescription("테스트 예산");
+        budget.setDescription("테스트 예산");
 
         budgetMapper.insertBudget(budget);
         budgetId = budget.getId();      //쿼리의 useGeneratedKeys="true" keyProperty="id"기능으로 insert된 id 가져옴

@@ -30,11 +30,11 @@ export default function ExpensePieChart({ budgets, expenses }) {
       <div style={containerStyle}>
         {budgets.map((b, index) => {
           const limit = Number(b.amount ?? 0);
-          const categoryCode = b.categoryDescription;
+          const categoryCode = b.category.code;
 
           // 지출 합산
           const spent = expenses
-            .filter((e) => e.category === categoryCode)
+            .filter((e) => e.category.code === categoryCode)
             .reduce((sum, e) => sum + Number(e.amount ?? 0), 0);
 
           const remaining = Math.max(limit - spent, 0);

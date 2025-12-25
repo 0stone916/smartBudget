@@ -50,7 +50,7 @@ export default function ExpenseList({ expenses, onEdit, onDelete }) {
           {expenses.map((e) => {
             return (
               <tr key={e.id}>
-                <td style={tdStyle}>{e.category}</td>
+                <td style={tdStyle}>{e.category?.name || "미지정"}</td>
                 <td style={tdStyle}>{e.day}일</td>
                 <td style={tdStyle}>{e.amount}원</td>
                 <td style={tdStyle}>{e.description}</td>

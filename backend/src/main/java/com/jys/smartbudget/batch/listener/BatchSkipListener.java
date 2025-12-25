@@ -28,7 +28,7 @@ public class BatchSkipListener {
                     .userId(budget.getUserId())
                     .year(budget.getYear())
                     .month(budget.getMonth())
-                    .category(budget.getCategory())
+                    .category(budget.getCategory().getCode())
                     .reason(t.getMessage())
                     .build()
             );
@@ -38,7 +38,7 @@ public class BatchSkipListener {
                 budget.getUserId(),
                 budget.getYear(),
                 budget.getMonth(),
-                budget.getCategory(),
+                budget.getCategory().getCode(),
                 t
             );
         }

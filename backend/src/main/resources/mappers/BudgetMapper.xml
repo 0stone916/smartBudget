@@ -5,26 +5,42 @@
 
 <mapper namespace="com.jys.smartbudget.mapper.BudgetMapper">
 
+    <resultMap id="budgetMap" type="com.jys.smartbudget.dto.BudgetDTO">
+        <id property="id" column="id"/>
+        <result property="amount" column="amount"/>
+        <result property="year" column="year"/>
+        <result property="month" column="month"/>
+        <result property="description" column="description"/>
+        <result property="userId" column="user_id"/>
+        <result property="version" column="version"/>
+
+        <association property="category" javaType="com.jys.smartbudget.dto.CategoryDTO">
+            <id property="code" column="code"/>
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+
     <insert id="insertBudget" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO budget (user_id, category, amount, year, month, description)
-        VALUES (#{userId}, #{category}, #{amount}, #{year}, #{month}, #{budgetDescription})
+        INSERT INTO budget (user_id, category_code, amount, year, month, description)
+        VALUES (#{userId}, #{category.code}, #{amount}, #{year}, #{month}, #{description})
     </insert>
 
-    <select id="selectBudgetsByConditionWithPaging" resultType="com.jys.smartbudget.dto.BudgetDTO">
+    <select id="selectBudgetsByConditionWithPaging" resultMap="budgetMap">
         SELECT 
             b.id, 
-            b.category, 
             b.amount, 
+            b.year, 
             b.month, 
-            b.description AS budgetDescription,
+            b.description,
             b.user_id,
             b.version,
-            c.description AS categoryDescription
+            c.code,  
+            c.name
         FROM budget b
-        LEFT JOIN category c ON b.category = c.code
+        LEFT JOIN category c ON b.category_code = c.code
         WHERE b.user_id = #{userId}
-        <if test="category != null and category != ''">
-            AND b.category = #{category}
+        <if test="category != null and category.code != null and category.code != ''">
+            AND b.category_code = #{category.code}
         </if>
         <if test="year != null">
             AND year = #{year}
@@ -37,11 +53,11 @@
 
     <update id="updateBudget">
         UPDATE budget
-        SET category = #{category},
+        SET category_code = #{category.code},
             amount = #{amount},
             year = #{year},
             month = #{month},
-            description = #{budgetDescription},
+            description = #{description},
             version = version + 1
         WHERE id = #{id}
           AND user_id = #{userId}
@@ -55,23 +71,23 @@
     </delete>
 
     <select id="existsByYearMonthCategory">
-    SELECT COUNT(*) FROM budget WHERE user_id = #{userId} AND year=#{year} AND month=#{month} AND category=#{category}
+    SELECT COUNT(*) FROM budget WHERE user_id = #{userId} AND year=#{year} AND month=#{month} AND category_code=#{category.code}
     </select>
 
     <!-- //Optimistic Lock 테스트용  -->
-    <select id="selectById" resultType="com.jys.smartbudget.dto.BudgetDTO">
+    <select id="selectById" resultMap="budgetMap">
         SELECT 
             b.id,
             b.user_id,
-            b.category,
             b.amount,
             b.year,
             b.month,
-            b.description AS budgetDescription,
+            b.description
             b.version,
-            c.description AS categoryDescription
+            c.code,
+            c.name
         FROM budget b
-        LEFT JOIN category c ON b.category = c.code
+        LEFT JOIN category c ON b.category_code = c.code
         WHERE b.id = #{id}
     </select>
 

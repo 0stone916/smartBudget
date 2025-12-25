@@ -101,9 +101,9 @@ public class MonthlyBudgetJobConfig {
             List<ExpenseDTO> expenses = expenseMapper.searchExpenses(condition);
 
             // 3. 카테고리별 합계
-            Map<String, Integer> categoryTotals =
-                expenses.stream().collect(Collectors.groupingBy(
-                    ExpenseDTO::getCategoryCode,
+            Map<String, Integer> categoryTotals = expenses.stream()
+                .collect(Collectors.groupingBy(
+                    expense -> (expense.getCategory() != null) ? expense.getCategory().getCode() : "UNKNOWN",
                     Collectors.summingInt(ExpenseDTO::getAmount)
                 ));
 
@@ -113,11 +113,11 @@ public class MonthlyBudgetJobConfig {
             for (Map.Entry<String, Integer> entry : categoryTotals.entrySet()) {
                 BudgetDTO budget = new BudgetDTO();
                 budget.setUserId(userId);
-                budget.setCategory(entry.getKey());
+                budget.getCategory().setCode(entry.getKey());
                 budget.setAmount(entry.getValue() + 50_000);
                 budget.setYear(targetYm.getYear());
                 budget.setMonth(targetYm.getMonthValue());
-                budget.setBudgetDescription(
+                budget.setDescription(
                     String.format("%d년 %d월 지출 기반 자동 생성",
                         baseYear, baseMonth)
                 );
@@ -168,7 +168,7 @@ public class MonthlyBudgetJobConfig {
                             budget.getUserId(),
                             budget.getYear(),
                             budget.getMonth(),
-                            budget.getCategory()
+                            budget.getCategory().getClass()
                         );
                         continue;
                     }

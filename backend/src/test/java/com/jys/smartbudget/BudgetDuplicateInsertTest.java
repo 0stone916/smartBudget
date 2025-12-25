@@ -30,9 +30,9 @@ class BudgetDuplicateInsertTest {
         first.setUserId(userId);
         first.setYear(2025);
         first.setMonth(12);
-        first.setCategory("FOOD");
+        first.setCategoryCode("FOOD");
         first.setAmount(500_000);
-        first.setBudgetDescription("첫 번째 예산");
+        first.setDescription("첫 번째 예산");
 
         budgetMapper.insertBudget(first);
         firstId = first.getId();

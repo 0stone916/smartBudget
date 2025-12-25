@@ -46,9 +46,9 @@ export default function BudgetList({ budgets, onEdit, onReload, onDelete }) {
         <tbody>
           {budgets.map((b) => (
             <tr key={b.id}>
-              <td style={tdStyle}>{b.categoryDescription}</td>
+              <td style={tdStyle}>{b.category.name}</td>
               <td style={tdStyle}>{b.amount}원</td>
-              <td style={tdStyle}>{b.budgetDescription}</td>
+              <td style={tdStyle}>{b.description}</td>
               <td style={tdStyle}>
                 <button style={editButtonStyle} onClick={() => onEdit(b)}>수정</button>
                 <button style={deleteButtonStyle} onClick={() => onDelete(b.id)}>삭제</button>

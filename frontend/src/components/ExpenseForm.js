@@ -45,15 +45,17 @@ export default function ExpenseForm({ selectedExpense, budgets, year, month, onS
   // selectedExpense가 바뀌면 폼 초기화
   useEffect(() => {
     if (selectedExpense) {
+      console.log("선택된 데이터 확인:", selectedExpense); 
       setForm({
-        budgetId: selectedExpense.budgetId || "",
+        budgetId: selectedExpense.budgetId ? String(selectedExpense.budgetId) : "",
         day: selectedExpense.day || "",
         amount: selectedExpense.amount || "",
         description: selectedExpense.description || "",
         id: selectedExpense.id || null,
+        version: selectedExpense.version ?? 0 
       });
     } else {
-      setForm({ budgetId: "", day: "", amount: "", description: "" });
+      setForm({ budgetId: "", day: "", amount: "", description: "", version: null });
     }
   }, [selectedExpense]);
 
@@ -89,15 +91,21 @@ export default function ExpenseForm({ selectedExpense, budgets, year, month, onS
     <div>
       <h2>{form.id ? "지출 수정" : "지출 등록"}</h2>
       <form onSubmit={handleSubmit} style={formStyle}>
-        <select name="budgetId" value={form.budgetId} onChange={handleChange} style={selectStyle} required>
-          <option value="">카테고리 선택</option>
-          {budgets.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.categoryDescription}
-            </option>
-          ))}
-        </select>
-
+      <select 
+        name="budgetId" 
+        value={String(form.budgetId)} // 현재 상태값을 문자열로 강제 변환
+        onChange={handleChange} 
+        style={selectStyle} 
+        required
+      >
+        <option value="">카테고리 선택</option>
+        {budgets.map((b) => (
+          <option key={b.id} value={String(b.id)}> {/* ID를 문자열로 변환하여 매칭 */}
+            {b.category?.name}
+          </option>
+        ))}
+      </select>
+      
         <input
           name="day"
           type="number"
