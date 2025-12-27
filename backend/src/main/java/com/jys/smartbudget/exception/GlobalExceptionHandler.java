@@ -1,8 +1,10 @@
 package com.jys.smartbudget.exception;
 
+import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.jys.smartbudget.dto.ApiResponse;
@@ -13,22 +15,44 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // 1. 낙관적 락 에러 (Optimistic Lock)
     @ExceptionHandler(OptimisticLockException.class)
     public ResponseEntity<ApiResponse<Void>> handleOptimisticLock() {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail("이미 다른 요청에 의해 수정되었습니다."));
+        ErrorCode ec = ErrorCode.OPTIMISTIC_LOCK_ERROR;
+        return ResponseEntity.status(ec.getStatus())
+                .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
 
+    // 2. 중복 키 에러 (Duplicate Key)
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateKey() {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail("이미 등록된 예산입니다."));
+        ErrorCode ec = ErrorCode.DUPLICATE_BUDGET;
+        return ResponseEntity.status(ec.getStatus())
+                .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
 
+    // 3. 벨리데이션 에러 (Validation)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Object>> handleValidation(MethodArgumentNotValidException e) {
+        ErrorCode ec = ErrorCode.INVALID_INPUT_VALUE;
+        
+        List<Map<String, String>> errorDetails = e.getBindingResult().getFieldErrors().stream()
+                .map(err -> Map.of(
+                    "field", err.getField(),
+                    "message", err.getDefaultMessage()
+                ))
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.status(ec.getStatus())
+                .body(ApiResponse.fail(ec.getCode(), ec.getMessage(), errorDetails));
+    }
+
+    // 4. 그 외 모든 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
         log.error("Unhandled exception", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail("서버 오류가 발생했습니다."));
+        ErrorCode ec = ErrorCode.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(ec.getStatus())
+                .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
 }
