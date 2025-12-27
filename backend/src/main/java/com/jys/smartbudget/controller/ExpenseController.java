@@ -2,12 +2,17 @@ package com.jys.smartbudget.controller;
 
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.ExpenseDTO;
+import com.jys.smartbudget.dto.SearchRequest;
 import com.jys.smartbudget.service.ExpenseService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@Validated          //@PathVariable이나 @RequestParam에 직접 붙인 제약 조건 사용시 필요
 @RestController
 @RequestMapping("/expenses")
 public class ExpenseController {
@@ -22,15 +27,15 @@ public class ExpenseController {
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<ExpenseDTO>>> searchExpenses(
             HttpServletRequest req,
-            @RequestParam Integer year,
-            @RequestParam Integer month) {
+            @Valid SearchRequest searchRequest) {
+
 
         String userId = (String) req.getAttribute("userId");
 
         ExpenseDTO expense = new ExpenseDTO();
         expense.setUserId(userId);
-        expense.setYear(year);
-        expense.setMonth(month);
+        expense.setYear(searchRequest.getYear());
+        expense.setMonth(searchRequest.getMonth());
 
         List<ExpenseDTO> result = expenseService.searchExpenses(expense);
 
@@ -44,7 +49,7 @@ public class ExpenseController {
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> insertExpense(
             HttpServletRequest req,
-            @RequestBody ExpenseDTO expense) {
+            @Valid @RequestBody ExpenseDTO expense) {
 
         String userId = (String) req.getAttribute("userId");
         expense.setUserId(userId);
@@ -68,7 +73,7 @@ public class ExpenseController {
     @PutMapping
     public ResponseEntity<ApiResponse<Void>> updateExpense(
             HttpServletRequest req,
-            @RequestBody ExpenseDTO expense) {
+            @Valid @RequestBody ExpenseDTO expense) {
 
         String userId = (String) req.getAttribute("userId");
         expense.setUserId(userId);
@@ -85,7 +90,8 @@ public class ExpenseController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteExpense(
             HttpServletRequest req,
-            @PathVariable Long id) {
+                @PathVariable @Min(value = 1, message = "유효하지 않은 예산 ID입니다.") Long id) {
+
 
         String userId = (String) req.getAttribute("userId");
 

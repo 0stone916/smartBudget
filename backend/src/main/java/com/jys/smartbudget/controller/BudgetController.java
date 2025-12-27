@@ -2,12 +2,17 @@ package com.jys.smartbudget.controller;
 
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.BudgetDTO;
+import com.jys.smartbudget.dto.SearchRequest;
 import com.jys.smartbudget.service.BudgetService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@Validated          //@PathVariable이나 @RequestParam에 직접 붙인 제약 조건 사용시 필요
 @RestController
 @RequestMapping("/budgets")
 public class BudgetController {
@@ -22,7 +27,7 @@ public class BudgetController {
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> insertBudget(
             HttpServletRequest req,
-            @RequestBody BudgetDTO budget) {
+            @Valid @RequestBody BudgetDTO budget) {
 
         String userId = (String) req.getAttribute("userId");
         budget.setUserId(userId);
@@ -37,18 +42,17 @@ public class BudgetController {
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<BudgetDTO>>> searchBudgets(
             HttpServletRequest req,
-            @RequestParam Integer year,
-            @RequestParam Integer month) {
+            @Valid SearchRequest searchRequest) {
 
         String userId = (String) req.getAttribute("userId");
 
-        BudgetDTO condition = new BudgetDTO();
-        condition.setUserId(userId);
-        condition.setYear(year);
-        condition.setMonth(month);
+        BudgetDTO budget = new BudgetDTO();
+        budget.setUserId(userId);
+        budget.setYear(searchRequest.getYear());
+        budget.setMonth(searchRequest.getMonth());
 
         List<BudgetDTO> budgets =
-                budgetService.selectBudgetsByConditionWithPaging(condition);
+                budgetService.selectBudgetsByConditionWithPaging(budget);
 
         return ResponseEntity.ok(
                 ApiResponse.success("조회 성공", budgets)
@@ -59,7 +63,7 @@ public class BudgetController {
     @PutMapping
     public ResponseEntity<ApiResponse<Void>> updateBudget(
             HttpServletRequest req,
-            @RequestBody BudgetDTO budget) {
+            @Valid @RequestBody BudgetDTO budget) {
 
         String userId = (String) req.getAttribute("userId");
         budget.setUserId(userId);
@@ -76,7 +80,7 @@ public class BudgetController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteBudget(
             HttpServletRequest req,
-            @PathVariable Long id) {
+                @PathVariable @Min(value = 1, message = "유효하지 않은 예산 ID입니다.") Long id) {
 
         String userId = (String) req.getAttribute("userId");
 
