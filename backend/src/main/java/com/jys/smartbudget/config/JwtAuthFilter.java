@@ -6,9 +6,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 // OncePerRequestFilter: Spring이 제공하는 필터 기본 클래스
 // 한 번의 요청당 딱 한 번만 실행되도록 보장해줌 (중복 실행 방지)
 // 템플릿 메서드 패턴: 부모가 전체 흐름을 제어하고, 내가 세부 구현만 채우면 됨
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     // Redis에서 토큰을 조회/저장/삭제하는 서비스
@@ -61,68 +62,48 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // 형식: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOi..."
         String authHeader = req.getHeader("Authorization");
 
-        // Authorization 헤더가 없거나 "Bearer "로 시작하지 않으면
-        // → 인증 실패 처리하고 여기서 종료 (Controller까지 안 감)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 상태코드
-            res.getWriter().write("Authorization Header Missing");
-            return; // 여기서 끝! chain.doFilter() 호출 안 함 = 다음 단계로 안 감
-        }
+        // // Authorization 헤더가 없거나 "Bearer "로 시작하지 않으면
+        // // → 인증 실패 처리하고 여기서 종료 (Controller까지 안 감)
+        // if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        //     res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 상태코드
+        //     res.getWriter().write("Authorization Header Missing");
+        //     return; // 여기서 끝! chain.doFilter() 호출 안 함 = 다음 단계로 안 감
+        // }
+        //Spring Security 요청권한을 확인 후 EntryPoint를 호출할 수 있게 주석
 
         // 2. "Bearer " 부분 제거하고 순수 토큰만 추출
         // "Bearer abc123" → "abc123"
-        String token = authHeader.replace("Bearer ", "");
-
-        try {
-            // 3. JWT 토큰에서 userId 추출
-            // JWT는 서명되어 있어서 위조 불가능 (SECRET_KEY로 검증)
-            // 토큰이 변조되었으면 여기서 JwtException 발생
-            String userId = jwtUtil.extractUserIdAllowExpired(token);
-
-            // 4. Redis에서 이 사용자의 최신 토큰 가져오기
-            // Redis 구조: Key=userId, Value=최신토큰
-            String savedToken = redisTokenService.getAccessToken(userId);
-
-            // 5. 단일 세션 검증: Redis 토큰과 현재 요청 토큰 비교
-            // savedToken이 null → 로그아웃했거나 Redis에 토큰 없음
-            // !equals(token) → 다른 기기에서 새로 로그인해서 토큰이 바뀜
-            if (savedToken == null || !savedToken.equals(token)) {
-                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                res.setContentType("application/json;charset=UTF-8"); // JSON 응답 설정
-                res.getWriter().write("{\"message\":\"다른 기기에서 로그인되어 세션이 만료되었습니다.\"}");
-                return; // 여기서 종료
+        if (authHeader != null && authHeader.startsWith("Bearer ")) { 
+            String token = authHeader.replace("Bearer ", "");
+    
+            try {
+                // 3. JWT 토큰에서 userId 추출
+                // JWT는 서명되어 있어서 위조 불가능 (SECRET_KEY로 검증)
+                // 토큰이 변조되었으면 여기서 JwtException 발생
+                String userId = jwtUtil.extractUserIdAllowExpired(token);
+    
+                // 4. Redis에서 이 사용자의 최신 토큰 가져오기
+                // Redis 구조: Key=userId, Value=최신토큰
+                String savedToken = redisTokenService.getAccessToken(userId);
+    
+                if (savedToken != null && savedToken.equals(token)) {   
+                    // 5. 인증 성공 시에만 SecurityContext에 등록
+                    UsernamePasswordAuthenticationToken authentication = 
+                        new UsernamePasswordAuthenticationToken(userId, null, new ArrayList<>());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    req.setAttribute("userId", userId);
+                }
+    
+            } catch (JwtException e) {
+                // 토큰 오류 발생 시 로그만 남기고 그냥 다음 체인으로 넘깁니다.
+                // 어차피 SecurityContext에 인증 정보가 없으므로 
+                // SecurityConfig에서 .authenticated() 설정된 API는 EntryPoint가 잡아냅니다.
+                log.error("JWT validation failed: {}", e.getMessage());
             }
-
-            // 6. 토큰이 유효함! → Spring Security에 인증 정보 등록
-            // Spring Security는 SecurityContext를 확인해서 인증 여부 판단
-            // 여기에 인증 정보를 넣어줘야 Spring Security가 "인증됨"으로 인식
-            UsernamePasswordAuthenticationToken authentication = 
-                new UsernamePasswordAuthenticationToken(
-                    userId,          // principal: 인증된 사용자 정보
-                    null,            // credentials: 비밀번호 (이미 인증됐으니 null)
-                    new ArrayList<>() // authorities: 권한 목록 (현재는 빈 리스트)
-                );
-            
-            // 요청 세부 정보 설정 (IP 주소, 세션 ID 등)
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
-            
-            // SecurityContext에 인증 정보 저장
-            // 이제 Spring Security가 "이 요청은 인증된 요청"이라고 인식함
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            
-            // 7. Controller에서 사용할 수 있도록 userId를 request에 저장
-            // Controller에서 req.getAttribute("userId")로 꺼내 쓸 수 있음
-            req.setAttribute("userId", userId);
-
-        } catch (JwtException e) {
-            // JWT 파싱 실패, 서명 검증 실패, 만료된 토큰 등
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            res.getWriter().write("유효하지 않은 토큰입니다.");
-            return;
+    
+            // 필터 체인의 다음 단계로 진행
+            // 다음 필터가 있으면 다음 필터로, 없으면 Controller로
         }
-
-        // 8. 필터 체인의 다음 단계로 진행
-        // 다음 필터가 있으면 다음 필터로, 없으면 Controller로
         chain.doFilter(req, res);
     }
 }
