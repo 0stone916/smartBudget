@@ -8,6 +8,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.jys.smartbudget.exception.JwtAuthenticationEntryPoint;
 import com.jys.smartbudget.service.RedisTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,7 +21,7 @@ public class SecurityConfig {
 
     private final RedisTokenService redisTokenService;
     private final JwtUtil jwtUtil;
-
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     /**
      * BCryptPasswordEncoder: 비밀번호를 암호화하는 도구
      * 회원가입 시 비밀번호를 그대로 저장하면 위험하니까 암호화해서 저장
@@ -59,12 +60,20 @@ public class SecurityConfig {
             // CSRF: 사이트 간 요청 위조 공격 방지 기능
             // REST API는 주로 stateless하고 JWT로 인증하므로 CSRF 보호 불필요
             .csrf(csrf -> csrf.disable())
-            
+
+            .exceptionHandling(exception -> exception
+
+            // 인증 실패(401) 시 실행할 에러 핸들러를 지정
+            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+        )
             // URL별 접근 권한 설정
             .authorizeHttpRequests(auth -> auth
                 // OPTIONS 요청은 모두 허용
                 // CORS preflight 요청 처리를 위해 필요
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // 로그아웃은 반드시 인증(토큰)이 있어야 한다고 명시 
+                .requestMatchers("/auth/logout").authenticated()
                 
                 // /auth/** 경로는 인증 없이 접근 가능
                 // 로그인, 회원가입 등은 토큰 없어도 가능해야 하니까

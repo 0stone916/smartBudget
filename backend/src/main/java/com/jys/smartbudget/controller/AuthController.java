@@ -7,11 +7,16 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.UserDTO;
+import com.jys.smartbudget.exception.ErrorCode;
 import com.jys.smartbudget.service.RedisTokenService;
 import com.jys.smartbudget.service.UserService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.jys.smartbudget.config.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController  // 이 클래스가 REST API 컨트롤러임을 표시
@@ -65,8 +70,7 @@ public class AuthController {
 
         // 5. 로그인 실패 (아이디/비밀번호 불일치)
         // 401 Unauthorized 상태코드 반환
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.fail("아이디 또는 비밀번호가 틀렸습니다."));
+        throw new BadCredentialsException("아이디 또는 비밀번호 불일치");
     }
 
     /**
@@ -94,20 +98,15 @@ public class AuthController {
      * "Authorization: Bearer abc123" → authHeader = "Bearer abc123"
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse> logout(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<ApiResponse> logout(HttpServletRequest req) {
 
-        // Authorization 헤더 검증
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.fail("잘못된 요청입니다."));
+    // 1. 필터가 이미 토큰 검증하고 넣어준 userId만 꺼냅니다.
+        String userId = (String) req.getAttribute("userId");
+
+        // 2. 만약 여기까지 왔는데 userId가 없다면? (시큐리티 설정 오류 방어 코드)
+        if (userId == null) {
+            throw new BadCredentialsException("인증 정보가 유효하지 않습니다.");
         }
-
-        // "Bearer " 제거하고 순수 토큰만 추출
-        // substring(7): "Bearer " 는 7글자
-        String token = authHeader.substring(7);
-        
-        // 토큰에서 userId 추출
-        String userId = jwtUtil.extractUserIdAllowExpired(token);
 
         // Redis에서 해당 유저의 토큰 삭제
         // 이제 이 토큰으로 API 요청하면 JwtAuthFilter에서 차단됨
@@ -124,21 +123,21 @@ public class AuthController {
         String refreshToken = body.get("refreshToken");
 
         if (refreshToken == null) {
-            return ResponseEntity.status(401).body("Refresh token missing");
+            throw new BadCredentialsException("Refresh Token이 누락되었습니다.");
         }
 
         String userId;
         try {
             userId = jwtUtil.extractUserIdAllowExpired(refreshToken);
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid refresh token");
+            throw new BadCredentialsException("유효하지 않은 Refresh Token입니다.");
         }
 
         // Redis에 저장된 기존 Refresh Token 가져오기
         String storedToken = redisTokenService.getRefreshToken(userId);
 
         if (storedToken == null || !storedToken.equals(refreshToken)) {
-            return ResponseEntity.status(401).body("Refresh token expired or invalid");
+            throw new BadCredentialsException("만료되었거나 유효하지 않은 Refresh Token입니다. 다시 로그인해주세요.");
         }
 
         // 새 access 발급 + redis 갱신
@@ -148,6 +147,6 @@ public class AuthController {
         Map<String, String> result = new HashMap<>();
         result.put("accessToken", newAccessToken);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ApiResponse.success("토큰 재발급 성공", result));
     }
 }
