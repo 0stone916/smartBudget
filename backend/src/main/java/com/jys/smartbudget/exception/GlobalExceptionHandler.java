@@ -4,7 +4,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -67,10 +66,18 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleLoginError(BadCredentialsException e) {
-        ErrorCode ec = ErrorCode.LOGIN_FAILED;
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+        ErrorCode ec = e.getErrorCode();
+        
+        // 예외 객체에 담긴 메시지가 있으면 그걸 쓰고, 없으면 ErrorCode의 기본 메시지를 씀
+        String message = (e.getMessage() != null && !e.getMessage().equals(ec.getMessage())) 
+                        ? e.getMessage() 
+                        : ec.getMessage();
+
+        log.error("Business Error: {} - {}", ec.getCode(), message);
+        
         return ResponseEntity.status(ec.getStatus())
-                .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
+                .body(ApiResponse.fail(ec.getCode(), message));
     }
 }

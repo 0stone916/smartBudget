@@ -2,23 +2,20 @@ package com.jys.smartbudget.controller;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.HttpStatus;
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.UserDTO;
+import com.jys.smartbudget.exception.BusinessException;
 import com.jys.smartbudget.exception.ErrorCode;
 import com.jys.smartbudget.service.RedisTokenService;
 import com.jys.smartbudget.service.UserService;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import com.jys.smartbudget.config.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController  // 이 클래스가 REST API 컨트롤러임을 표시
 @RequestMapping("/auth")  // 이 컨트롤러의 기본 경로는 /auth
 @RequiredArgsConstructor
@@ -70,7 +67,7 @@ public class AuthController {
 
         // 5. 로그인 실패 (아이디/비밀번호 불일치)
         // 401 Unauthorized 상태코드 반환
-        throw new BadCredentialsException("아이디 또는 비밀번호 불일치");
+        throw new BusinessException(ErrorCode.LOGIN_FAILED);
     }
 
     /**
@@ -105,7 +102,7 @@ public class AuthController {
 
         // 2. 만약 여기까지 왔는데 userId가 없다면? (시큐리티 설정 오류 방어 코드)
         if (userId == null) {
-            throw new BadCredentialsException("인증 정보가 유효하지 않습니다.");
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
 
         // Redis에서 해당 유저의 토큰 삭제
@@ -123,21 +120,22 @@ public class AuthController {
         String refreshToken = body.get("refreshToken");
 
         if (refreshToken == null) {
-            throw new BadCredentialsException("Refresh Token이 누락되었습니다.");
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
 
         String userId;
         try {
             userId = jwtUtil.extractUserIdAllowExpired(refreshToken);
         } catch (Exception e) {
-            throw new BadCredentialsException("유효하지 않은 Refresh Token입니다.");
+            log.error("Refresh token parsing failed: {}", e.getMessage()); 
+            throw new BusinessException(ErrorCode.TOKEN_INVALID, "유효하지 않은 Refresh Token입니다.");
         }
 
         // Redis에 저장된 기존 Refresh Token 가져오기
         String storedToken = redisTokenService.getRefreshToken(userId);
 
         if (storedToken == null || !storedToken.equals(refreshToken)) {
-            throw new BadCredentialsException("만료되었거나 유효하지 않은 Refresh Token입니다. 다시 로그인해주세요.");
+            throw new BusinessException(ErrorCode.TOKEN_INVALID, "만료되었거나 유효하지 않은 Refresh Token입니다. 다시 로그인해주세요.");
         }
 
         // 새 access 발급 + redis 갱신
