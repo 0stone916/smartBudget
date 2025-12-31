@@ -4,6 +4,8 @@ import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.ExpenseDTO;
 import com.jys.smartbudget.dto.SearchRequest;
 import com.jys.smartbudget.service.ExpenseService;
+import com.jys.smartbudget.util.DateUtils;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -29,7 +31,6 @@ public class ExpenseController {
             HttpServletRequest req,
             @Valid SearchRequest searchRequest) {
 
-
         String userId = (String) req.getAttribute("userId");
 
         ExpenseDTO expense = new ExpenseDTO();
@@ -50,6 +51,8 @@ public class ExpenseController {
     public ResponseEntity<ApiResponse<Void>> insertExpense(
             HttpServletRequest req,
             @Valid @RequestBody ExpenseDTO expense) {
+
+        DateUtils.validateDate(expense.getYear(), expense.getMonth(), expense.getDay());
 
         String userId = (String) req.getAttribute("userId");
         expense.setUserId(userId);
@@ -75,6 +78,8 @@ public class ExpenseController {
             HttpServletRequest req,
             @Valid @RequestBody ExpenseDTO expense) {
 
+        DateUtils.validateDate(expense.getYear(), expense.getMonth(), expense.getDay());
+        
         String userId = (String) req.getAttribute("userId");
         expense.setUserId(userId);
 
