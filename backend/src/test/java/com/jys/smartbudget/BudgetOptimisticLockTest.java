@@ -36,9 +36,6 @@ class BudgetOptimisticLockTest {
     @Autowired
     private BudgetService budgetService;
 
-    @Autowired
-    private BudgetMapper budgetMapper;
-
     private Long budgetId;
     private final String userId = "testuser";
 
@@ -55,7 +52,7 @@ class BudgetOptimisticLockTest {
         category.setCode("FOOD");
         budget.setCategory(category);
 
-        budgetMapper.insertBudget(budget);
+        budgetService.insertBudget(budget);
         budgetId = budget.getId();      //쿼리의 useGeneratedKeys="true" keyProperty="id"기능으로 insert된 id 가져옴
 
         //useGeneratedKeys="true" keyProperty="id"는 id만 가져오고 version은 가져오지못함 DTO의 version을 0으로 선언과 동시에 초기화로 해결
@@ -66,8 +63,8 @@ class BudgetOptimisticLockTest {
     @DisplayName("낙관적 락 기본 동작: version 불일치 시 수정 실패")
     void optimisticLock_basic() {
         // [1] 동일한 시점의 데이터를 두 번 조회 (둘 다 version 0)
-        BudgetDTO first = budgetMapper.selectById(budgetId);
-        BudgetDTO second = budgetMapper.selectById(budgetId);
+        BudgetDTO first = budgetService.selectById(budgetId);
+        BudgetDTO second = budgetService.selectById(budgetId);
 
         // [2] 첫 번째 수정 요청: 성공 (DB version 0 -> 1로 변경)
         first.setAmount(600_000);
@@ -94,7 +91,7 @@ class BudgetOptimisticLockTest {
         AtomicInteger fail = new AtomicInteger();
 
         // [1] 기준 데이터 조회 (모두가 이 version으로 시작하게 됨)
-        BudgetDTO base = budgetMapper.selectById(budgetId);
+        BudgetDTO base = budgetService.selectById(budgetId);
 
         for (int i = 0; i < threadCount; i++) {
             executor.execute(() -> {
@@ -125,7 +122,7 @@ class BudgetOptimisticLockTest {
         assertThat(fail.get()).isEqualTo(threadCount - 1);
 
         // [6] 최종 DB 상태 확인: 버전이 1번만 상승했는지 검증
-        BudgetDTO finalBudget = budgetMapper.selectById(budgetId);
+        BudgetDTO finalBudget = budgetService.selectById(budgetId);
         assertThat(finalBudget.getVersion()).isEqualTo(1);
 
         //세가지검증에 하나라도 통과못하면 빌드 fail
@@ -134,7 +131,7 @@ class BudgetOptimisticLockTest {
     @Test
     @DisplayName("잘못된 version으로 수정 시 무조건 실패")
     void optimisticLock_invalidVersion() {
-        BudgetDTO budget = budgetMapper.selectById(budgetId);
+        BudgetDTO budget = budgetService.selectById(budgetId);
 
         // [1] DB에 없는 억지 버전으로 세팅
         budget.setVersion(999); 
@@ -149,7 +146,7 @@ class BudgetOptimisticLockTest {
     void tearDown() {
         // 테스트에서 생성한 id만 삭제하여 DB를 깨끗하게 유지
         if (budgetId != null) {
-            budgetMapper.deleteBudget(budgetId, userId);
+            budgetService.deleteBudget(budgetId, userId);
             log.info("테스트 데이터 삭제: id={}", budgetId);
         }
     }

@@ -1,20 +1,22 @@
 package com.jys.smartbudget.service;
 
 import com.jys.smartbudget.dto.BudgetDTO;
+import com.jys.smartbudget.exception.BusinessException;
+import com.jys.smartbudget.exception.ErrorCode;
 import com.jys.smartbudget.mapper.BudgetMapper;
+import com.jys.smartbudget.mapper.ExpenseMapper;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
+@RequiredArgsConstructor
 @Service
 public class BudgetService {
 
     private final BudgetMapper budgetMapper;
-
-    public BudgetService(BudgetMapper budgetMapper) {
-        this.budgetMapper = budgetMapper;
-    }
+    private final ExpenseMapper expenseMapper;
 
     public void insertBudget(BudgetDTO budget) {
         budgetMapper.insertBudget(budget);
@@ -26,6 +28,15 @@ public class BudgetService {
 
     @Transactional
     public void updateBudget(BudgetDTO budget) {
+
+        BudgetDTO originBudget = budgetMapper.selectById(budget.getId());
+
+        if(!budget.getCategory().equals(originBudget.getCategory().getCode())) {
+                if (expenseMapper.hasExpensesByBudgetId(budget.getId()) > 0) {
+                        throw new BusinessException(ErrorCode.CANNOT_CHANGE_CATEGORY_WITH_EXPENSES);
+                }
+        }
+
         int updatedCount = budgetMapper.updateBudget(budget);
 
         if (updatedCount == 0) {
@@ -39,6 +50,10 @@ public class BudgetService {
 
     public Boolean existsByYearMonthCategory(BudgetDTO budget) {
         return budgetMapper.existsByYearMonthCategory(budget);
+    }
+
+    public BudgetDTO selectById(Long id) {
+        return budgetMapper.selectById(id);
     }
 
 

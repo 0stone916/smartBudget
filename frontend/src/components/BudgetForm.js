@@ -98,6 +98,8 @@ export default function BudgetForm({ selectedBudget, onSave, year, month, budget
       onSave();
       setForm({ category: { code: "" }, amount: "", description: ""});
     } catch (error) {
+      const serverMessage = error.response?.data?.message || "저장 중 오류가 발생했습니다.";
+      alert(serverMessage);
       console.error("저장 실패", error);
     }
   };

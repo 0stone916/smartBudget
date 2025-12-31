@@ -18,7 +18,12 @@ public enum ErrorCode {
     // 공통
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C001", "입력값이 올바르지 않습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "서버 오류가 발생했습니다."),
-    INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "C003", "유효하지 않은 날짜입니다.");
+    INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "C003", "유효하지 않은 날짜입니다."),
+
+    CANNOT_CHANGE_CATEGORY_WITH_EXPENSES(HttpStatus.CONFLICT, "D001", "지출내역이 있는 예산은 카테고리 변경 할 수 없습니다");
+
+
+    
 
 
     

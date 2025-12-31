@@ -41,4 +41,8 @@ public class ExpenseService {
         return expenseMapper.checkOverBudget(expense);
     }
 
+    public boolean hasExpensesByBudgetId(Long budgetId) {
+        return expenseMapper.hasExpensesByBudgetId(budgetId) > 0;
+    }
+
 }

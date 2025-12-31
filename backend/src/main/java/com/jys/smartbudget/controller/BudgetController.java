@@ -7,6 +7,7 @@ import com.jys.smartbudget.service.BudgetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -14,14 +15,11 @@ import java.util.List;
 
 @Validated          //@PathVariable이나 @RequestParam에 직접 붙인 제약 조건 사용시 필요
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/budgets")
 public class BudgetController {
 
     private final BudgetService budgetService;
-
-    public BudgetController(BudgetService budgetService) {
-        this.budgetService = budgetService;
-    }
 
     // 예산 등록
     @PostMapping
