@@ -5,7 +5,7 @@ JWT + Redis 기반의 서버 주도 세션 제어와 Spring Batch를 활용한 �
 
 ## 🛠 Tech Stack
 - **Back-end**: Java 17, Spring Boot, **Spring Batch 5**, **Redis**, MySQL, MyBatis
-- **Front-end**: React, Axios, Chart.js
+- **Front-end**: React
 - **Tool**: VS Code
 
 ---
