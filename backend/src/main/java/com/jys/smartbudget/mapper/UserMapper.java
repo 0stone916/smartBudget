@@ -16,5 +16,5 @@ public interface UserMapper {
     // 회원가입용: 새 유저 등록
     void insertUser(UserDTO user);
 
-    List<String> selectAllUserIds();
+    List<String> selectAutoBudgetTargetUserIds();
 }

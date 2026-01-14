@@ -13,9 +13,12 @@
         VALUES (#{userId}, #{password}, #{name}, #{email})
     </insert>
 
-    <select id="selectAllUserIds" resultType="String">
-        SELECT DISTINCT user_id 
-        FROM user
-        ORDER BY user_id
+    <select id="selectAutoBudgetTargetUserIds" resultType="String">
+        SELECT u.user_id
+        FROM user u
+        JOIN auto_budget_policy p
+            ON u.user_id = p.user_id
+        WHERE p.auto_enabled = true
+        ORDER BY u.user_id
     </select>
 </mapper>

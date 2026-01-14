@@ -8,6 +8,9 @@ import com.jys.smartbudget.mapper.ExpenseMapper;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -17,6 +20,7 @@ public class BudgetService {
 
     private final BudgetMapper budgetMapper;
     private final ExpenseMapper expenseMapper;
+    private static final Logger auditLog = LoggerFactory.getLogger("AUDIT");
 
     public void insertBudget(BudgetDTO budget) {
         budgetMapper.insertBudget(budget);
@@ -54,6 +58,21 @@ public class BudgetService {
 
     public BudgetDTO selectById(Long id) {
         return budgetMapper.selectById(id);
+    }
+
+    @Transactional
+    public void changeAutoBudget(Boolean autoEnabled, String userId) {
+        budgetMapper.changeAutoBudget(
+            autoEnabled,
+            userId,
+            userId // updated_by
+        );
+
+            auditLog.info(
+            "POLICY_CHANGE policy=AUTO_BUDGET_MONTHLY user={} after_auto_enabled={}",
+            userId,
+            autoEnabled
+        );
     }
 
 

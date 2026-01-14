@@ -88,4 +88,17 @@ public class BudgetController {
                 ApiResponse.success("예산 삭제 완료")
         );
     }
+
+    @PostMapping("/changeAutoBudget")
+    public ResponseEntity<ApiResponse<Void>> changeAutoBudget(HttpServletRequest req, @RequestBody Boolean autoEnabled) {
+
+        String userId = (String) req.getAttribute("userId");
+
+        budgetService.changeAutoBudget(autoEnabled, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("자동 예산 생성 여부 변경 완료")
+        );
+    }
+    
 }
