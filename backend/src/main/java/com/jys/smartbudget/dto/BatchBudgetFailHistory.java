@@ -1,5 +1,7 @@
 package com.jys.smartbudget.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.*;
 
 @Getter
@@ -15,4 +17,6 @@ public class BatchBudgetFailHistory {
     private Integer month;
     private String category;
     private String reason;
+    private String processedYn;
+    private LocalDateTime processedAt;
 }

@@ -45,5 +45,34 @@
         )
     </insert>
 
+    <select id="selectUnprocessedFailHistories"
+        resultType="com.jys.smartbudget.dto.BatchBudgetFailHistory">
+        SELECT
+            id,
+            job_name,
+            user_id,
+            year,
+            month,
+            category,
+            reason,
+            processed_yn
+        FROM batch_budget_fail_history
+        WHERE processed_yn = 'N'
+        ORDER BY id ASC
+    </select>
+
+    <update id="markFailHistoryProcessed">
+        UPDATE batch_budget_fail_history
+        SET
+            processed_yn = 'Y',
+            processed_at = #{processedAt}
+        WHERE user_id = #{userId}
+        AND year = #{year}
+        AND month = #{month}
+        AND category = #{category}
+        AND processed_yn = 'N'
+    </update>
+
+
 
 </mapper>

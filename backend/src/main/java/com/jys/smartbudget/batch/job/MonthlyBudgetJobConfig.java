@@ -2,6 +2,7 @@ package com.jys.smartbudget.batch.job;
 
 import com.jys.smartbudget.batch.listener.BatchSkipListener;
 import com.jys.smartbudget.batch.listener.BatchSummaryStepListener;
+import com.jys.smartbudget.batch.support.BudgetCalculationHelper;
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.dto.ExpenseDTO;
 import com.jys.smartbudget.mapper.BudgetMapper;
@@ -40,6 +41,8 @@ public class MonthlyBudgetJobConfig {
     private final UserMapper userMapper;  
     private final BatchSkipListener batchSkipListener;  
     private final BatchSummaryStepListener batchSummaryStepListener;  
+    private final BudgetCalculationHelper budgetCalculationHelper;
+
     private static final Logger auditLog = LoggerFactory.getLogger("AUDIT");
 
     @Bean
@@ -81,22 +84,17 @@ public class MonthlyBudgetJobConfig {
     @Bean
     public ItemProcessor<String, List<BudgetDTO>> userExpenseProcessor() {
         return userId -> {
-            // 1. 배치 실행 시점 기준
-            YearMonth now = YearMonth.now(); 
+
+            YearMonth now = YearMonth.now();
             YearMonth baseYm = now.minusMonths(1);
-            YearMonth targetYm = now; 
+            YearMonth targetYm = now;
 
             log.info("사용자 {} / 기준월 {} / 대상월 {}", userId, baseYm, targetYm);
 
-            // 2. 기준월 지출 조회
-            ExpenseDTO condition = new ExpenseDTO();
-            condition.setUserId(userId);
-            condition.setYear(baseYm.getYear());
-            condition.setMonth(baseYm.getMonthValue());
+            List<BudgetDTO> budgets =
+                budgetCalculationHelper.calculateBudgets(userId, baseYm, targetYm);
 
-            List<ExpenseDTO> expenses = expenseMapper.searchExpenses(condition);
-
-            if (expenses.isEmpty()) {
+            if (budgets.isEmpty()) {
                 auditLog.info(
                     "AUTO_BUDGET_NO_EXPENSE user={} reason=NO_EXPENSE baseYm={}",
                     userId, baseYm
@@ -104,43 +102,10 @@ public class MonthlyBudgetJobConfig {
                 return null;
             }
 
-            // 3. 카테고리별 합계
-            Map<String, Integer> categoryTotals = expenses.stream()
-                .collect(Collectors.groupingBy(
-                    expense -> (expense.getCategory() != null) ? expense.getCategory().getCode() : "UNKNOWN",
-                    Collectors.summingInt(ExpenseDTO::getAmount)
-                ));
-
-            // 4. 다음 달 예산 생성
-            List<BudgetDTO> budgets = new ArrayList<>();
-
-            for (Map.Entry<String, Integer> entry : categoryTotals.entrySet()) {
-                BudgetDTO budget = new BudgetDTO();
-                budget.setUserId(userId);
-                budget.getCategory().setCode(entry.getKey());
-                budget.setAmount(entry.getValue() + 50_000);
-                budget.setYear(targetYm.getYear());
-                budget.setMonth(targetYm.getMonthValue());
-                budget.setDescription(
-                    String.format("%d년 %d월 지출 기반 자동 생성",
-                        baseYm.getYear(), baseYm.getMonthValue())
-                );
-
-                budgets.add(budget);
-
-                log.info(
-                    " → (user={}) [{}] {}원 → {}원",
-                    userId,
-                    entry.getKey(),
-                    entry.getValue(),
-                    budget.getAmount()
-                );
-
-            }
-
             return budgets;
         };
     }
+
 
 
 
@@ -193,6 +158,4 @@ public class MonthlyBudgetJobConfig {
             log.info("배치 결과: 생성 {}건, 비지니스스킵 {}건", insertCount, businessSkipCount);
         };
     }
-
-
 }
