@@ -5,7 +5,7 @@ import org.springframework.batch.core.annotation.OnSkipInWrite;
 import org.springframework.stereotype.Component;
 import com.jys.smartbudget.dto.BatchBudgetFailHistory;
 import com.jys.smartbudget.dto.BudgetDTO;
-import com.jys.smartbudget.mapper.BatchBudgetFailHistoryMapper;
+import com.jys.smartbudget.mapper.BatchBudgetMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BatchSkipListener {
 
-    private final BatchBudgetFailHistoryMapper failHistoryMapper;
+    private final BatchBudgetMapper batchBudgetMapper;
 
     @OnSkipInWrite
     public void onSkipInWrite(
@@ -22,7 +22,7 @@ public class BatchSkipListener {
         Throwable t
     ) {
         for (BudgetDTO budget : item) {
-            failHistoryMapper.insert(
+            batchBudgetMapper.insertBatchBudgetFailHistory(
                 BatchBudgetFailHistory.builder()
                     .jobName("monthlyBudgetJob")
                     .userId(budget.getUserId())

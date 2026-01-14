@@ -1,6 +1,7 @@
 package com.jys.smartbudget.batch.job;
 
 import com.jys.smartbudget.batch.listener.BatchSkipListener;
+import com.jys.smartbudget.batch.listener.BatchSummaryStepListener;
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.dto.ExpenseDTO;
 import com.jys.smartbudget.mapper.BudgetMapper;
@@ -38,6 +39,7 @@ public class MonthlyBudgetJobConfig {
     private final BudgetService budgetService;
     private final UserMapper userMapper;  
     private final BatchSkipListener batchSkipListener;  
+    private final BatchSummaryStepListener batchSummaryStepListener;  
     private static final Logger auditLog = LoggerFactory.getLogger("AUDIT");
 
     @Bean
@@ -58,6 +60,7 @@ public class MonthlyBudgetJobConfig {
                 .skip(Exception.class)   // 어떤 예외를 스킵할지
                 .skipLimit(1000)         // 최대 스킵 허용 개수
                 .listener(batchSkipListener)
+                .listener(batchSummaryStepListener) // 요약 
                 .build();
     }
 
@@ -95,7 +98,7 @@ public class MonthlyBudgetJobConfig {
 
             if (expenses.isEmpty()) {
                 auditLog.info(
-                    "AUTO_BUDGET_SKIPPED user={} reason=NO_EXPENSE baseYm={}",
+                    "AUTO_BUDGET_NO_EXPENSE user={} reason=NO_EXPENSE baseYm={}",
                     userId, baseYm
                 );
                 return null;
@@ -148,7 +151,7 @@ public class MonthlyBudgetJobConfig {
     public ItemWriter<List<BudgetDTO>> budgetItemWriter() {
         return budgetLists -> {
             int insertCount = 0;
-            int skipCount = 0;
+            int businessSkipCount = 0;
 
             for (List<BudgetDTO> budgets : budgetLists) {
                 if (budgets == null) continue;
@@ -163,9 +166,9 @@ public class MonthlyBudgetJobConfig {
 
                     // 이미 예산이 존재하면 건너뜀
                     if (budgetService.existsByYearMonthCategory(budget)) {
-                        skipCount++;
+                        businessSkipCount++;
                         auditLog.info(
-                            "AUTO_BUDGET_SKIPPED user={} year={} month={} category={} reason=ALREADY_EXISTS",
+                            "AUTO_BUDGET_BUSINESS_SKIPPED user={} year={} month={} category={} reason=ALREADY_EXISTS",
                             budget.getUserId(),
                             budget.getYear(),
                             budget.getMonth(),
@@ -187,7 +190,7 @@ public class MonthlyBudgetJobConfig {
                 }
             }
 
-            log.info("배치 결과: 생성 {}건, 스킵 {}건", insertCount, skipCount);
+            log.info("배치 결과: 생성 {}건, 비지니스스킵 {}건", insertCount, businessSkipCount);
         };
     }
 
