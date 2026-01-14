@@ -9,6 +9,8 @@ import com.jys.smartbudget.mapper.UserMapper;
 import com.jys.smartbudget.service.BudgetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -36,6 +38,7 @@ public class MonthlyBudgetJobConfig {
     private final BudgetService budgetService;
     private final UserMapper userMapper;  
     private final BatchSkipListener batchSkipListener;  
+    private static final Logger auditLog = LoggerFactory.getLogger("AUDIT");
 
     @Bean
     public Job monthlyBudgetJob(JobRepository jobRepository, Step calculateMonthlyExpenseStep) {
@@ -64,9 +67,8 @@ public class MonthlyBudgetJobConfig {
     @Bean
     public ListItemReader<String> userItemReader() {
         // 모든 사용자 ID 조회
-        List<String> userIds = userMapper.selectAllUserIds();
-        log.info("전체 사용자 수: {}명", userIds.size());
-        
+        List<String> userIds = userMapper.selectAutoBudgetTargetUserIds();
+        log.info("자동 예산 생성 사용자 수: {}명", userIds.size());
         return new ListItemReader<>(userIds);
     }
 
@@ -76,29 +78,28 @@ public class MonthlyBudgetJobConfig {
     @Bean
     public ItemProcessor<String, List<BudgetDTO>> userExpenseProcessor() {
         return userId -> {
-            log.info("사용자 {} 처리 시작", userId);
+            // 1. 배치 실행 시점 기준
+            YearMonth now = YearMonth.now(); 
+            YearMonth baseYm = now.minusMonths(1);
+            YearMonth targetYm = now; 
 
-            // 1. 최근 지출 1건 조회 (가장 최신 월 기준)
-            ExpenseDTO latestExpense = expenseMapper.findLatestExpense(userId);
+            log.info("사용자 {} / 기준월 {} / 대상월 {}", userId, baseYm, targetYm);
 
-            if (latestExpense == null) {
-                log.info(" → 지출 내역 없음, 건너뜀");
-                return null;
-            }
-
-            int baseYear = latestExpense.getYear();
-            int baseMonth = latestExpense.getMonth();
-
-            YearMonth baseYm = YearMonth.of(baseYear, baseMonth);
-            YearMonth targetYm = baseYm.plusMonths(1);
-
-            // 2. 기준월 지출 전체 조회
+            // 2. 기준월 지출 조회
             ExpenseDTO condition = new ExpenseDTO();
             condition.setUserId(userId);
-            condition.setYear(baseYear);
-            condition.setMonth(baseMonth);
+            condition.setYear(baseYm.getYear());
+            condition.setMonth(baseYm.getMonthValue());
 
             List<ExpenseDTO> expenses = expenseMapper.searchExpenses(condition);
+
+            if (expenses.isEmpty()) {
+                auditLog.info(
+                    "AUTO_BUDGET_SKIPPED user={} reason=NO_EXPENSE baseYm={}",
+                    userId, baseYm
+                );
+                return null;
+            }
 
             // 3. 카테고리별 합계
             Map<String, Integer> categoryTotals = expenses.stream()
@@ -119,7 +120,7 @@ public class MonthlyBudgetJobConfig {
                 budget.setMonth(targetYm.getMonthValue());
                 budget.setDescription(
                     String.format("%d년 %d월 지출 기반 자동 생성",
-                        baseYear, baseMonth)
+                        baseYm.getYear(), baseYm.getMonthValue())
                 );
 
                 budgets.add(budget);
@@ -163,22 +164,32 @@ public class MonthlyBudgetJobConfig {
                     // 이미 예산이 존재하면 건너뜀
                     if (budgetService.existsByYearMonthCategory(budget)) {
                         skipCount++;
-                        log.info(
-                            "이미 예산 존재 → 스킵 (user={}, {}-{}, {})",
+                        auditLog.info(
+                            "AUTO_BUDGET_SKIPPED user={} year={} month={} category={} reason=ALREADY_EXISTS",
                             budget.getUserId(),
                             budget.getYear(),
                             budget.getMonth(),
-                            budget.getCategory().getClass()
+                            budget.getCategory().getCode()
                         );
                         continue;
                     }
                         budgetMapper.insertBudget(budget);
                         insertCount++;
+
+                        auditLog.info(
+                            "AUTO_BUDGET_CREATED user={} year={} month={} category={} amount={}",
+                            budget.getUserId(),
+                            budget.getYear(),
+                            budget.getMonth(),
+                            budget.getCategory().getCode(),
+                            budget.getAmount()
+                        );
                 }
             }
 
             log.info("배치 결과: 생성 {}건, 스킵 {}건", insertCount, skipCount);
         };
     }
+
 
 }
