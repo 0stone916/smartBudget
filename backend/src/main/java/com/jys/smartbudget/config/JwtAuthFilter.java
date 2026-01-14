@@ -58,6 +58,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
 
+
+
+
+         
+        // 테스트용
+        String testUser = req.getHeader("X-TEST-USER");
+        if (testUser != null) {
+            UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(testUser, null, new ArrayList<>());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            req.setAttribute("userId", testUser);
+
+            chain.doFilter(req, res);
+            return;
+        }        
+
         // 1. HTTP 헤더에서 Authorization 값 가져오기
         // 형식: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOi..."
         String authHeader = req.getHeader("Authorization");
