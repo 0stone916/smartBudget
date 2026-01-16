@@ -56,7 +56,7 @@ class BudgetDuplicateInsertTest {
     void tearDown() {
         // 테스트에서 생성한 id만 삭제하여 DB를 깨끗하게 유지
         if (firstId != null) {
-            budgetMapper.deleteBudget(firstId, userId);
+            budgetMapper.deleteBudgetByIdAndUserId(firstId, userId);
             log.info("테스트 데이터 삭제: id={}", firstId);
         }
     }

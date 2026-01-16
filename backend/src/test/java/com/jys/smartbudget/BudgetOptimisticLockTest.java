@@ -146,7 +146,7 @@ class BudgetOptimisticLockTest {
     void tearDown() {
         // 테스트에서 생성한 id만 삭제하여 DB를 깨끗하게 유지
         if (budgetId != null) {
-            budgetService.deleteBudget(budgetId, userId);
+            budgetService.deleteBudgetByIdAndUserId(budgetId, userId);
             log.info("테스트 데이터 삭제: id={}", budgetId);
         }
     }

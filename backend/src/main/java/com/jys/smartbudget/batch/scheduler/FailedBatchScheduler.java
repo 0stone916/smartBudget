@@ -12,34 +12,35 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import com.jys.smartbudget.mapper.BatchBudgetMapper;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
-public class BatchScheduler {
+@Slf4j
+public class FailedBatchScheduler {
 
     private final JobLauncher jobLauncher;
-    private final Job monthlyBudgetJob;
+    private final Job failedBudgetReprocessJob;
+    private final BatchBudgetMapper batchBudgetMapper;
 
-    /**
-     * 매월 1일 오전 2시에 실행
-     * - 전월 지출 데이터 기반으로 이번 달 예산 자동 생성
-     * @throws JobParametersInvalidException 
-     * @throws JobInstanceAlreadyCompleteException 
-     * @throws JobRestartException 
-     * @throws JobExecutionAlreadyRunningException 
-     */
-    @Scheduled(cron = "0 0 2 1 * ?")
-    public void runMonthlyBudgetJob() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
-        log.info("=== 월별 예산 배치 작업 시작 ===");
-        
-        // 매번 다른 JobParameters로 실행 (중복 방지)
+    @Scheduled(cron = "0 30 2 1 * ?") // 매월 1일 02:30
+    public void runFailedBudgetReprocessJobIfNeeded() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+
+        int failCount = batchBudgetMapper.countUnprocessedFailHistories();
+
+        if (failCount == 0) {
+            log.info("재배치 대상 없음 → Job 실행 스킵");
+            return;
+        }
+
         JobParameters params = new JobParametersBuilder()
             .addLong("time", System.currentTimeMillis())
             .toJobParameters();
-        
-        jobLauncher.run(monthlyBudgetJob, params);
-        
-        log.info("=== 월별 예산 배치 작업 완료 ===");
+
+        log.info("재배치 대상 {}건 → 재배치 Job 실행", failCount);
+
+        jobLauncher.run(failedBudgetReprocessJob, params);
+
+
     }
 }

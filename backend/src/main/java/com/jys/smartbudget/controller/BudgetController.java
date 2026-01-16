@@ -76,29 +76,19 @@ public class BudgetController {
 
     // 예산 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteBudget(
+    public ResponseEntity<ApiResponse<Void>> deleteBudgetByIdAndUserId(
             HttpServletRequest req,
                 @PathVariable @Min(value = 1, message = "유효하지 않은 예산 ID입니다.") Long id) {
 
         String userId = (String) req.getAttribute("userId");
 
-        budgetService.deleteBudget(id, userId);
+        budgetService.deleteBudgetByIdAndUserId(id, userId);
 
         return ResponseEntity.ok(
                 ApiResponse.success("예산 삭제 완료")
         );
     }
 
-    @PostMapping("/changeAutoBudget")
-    public ResponseEntity<ApiResponse<Void>> changeAutoBudget(HttpServletRequest req, @RequestBody Boolean autoEnabled) {
 
-        String userId = (String) req.getAttribute("userId");
-
-        budgetService.changeAutoBudget(autoEnabled, userId);
-
-        return ResponseEntity.ok(
-                ApiResponse.success("자동 예산 생성 여부 변경 완료")
-        );
-    }
     
 }

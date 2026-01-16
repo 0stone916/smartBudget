@@ -72,6 +72,11 @@
         WHERE id = #{id} AND user_id = #{userId}
     </delete>
 
+    <delete id="deleteExpensesByUserId">
+        DELETE FROM expense
+        WHERE user_id = #{userId}
+    </delete>
+
     <select id="checkOverBudget" resultType="boolean" parameterType="com.jys.smartbudget.dto.ExpenseDTO">
         SELECT 
             CASE 

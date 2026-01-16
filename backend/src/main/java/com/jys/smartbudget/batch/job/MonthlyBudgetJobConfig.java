@@ -4,9 +4,7 @@ import com.jys.smartbudget.batch.listener.BatchSkipListener;
 import com.jys.smartbudget.batch.listener.BatchSummaryStepListener;
 import com.jys.smartbudget.batch.support.BudgetCalculationHelper;
 import com.jys.smartbudget.dto.BudgetDTO;
-import com.jys.smartbudget.dto.ExpenseDTO;
 import com.jys.smartbudget.mapper.BudgetMapper;
-import com.jys.smartbudget.mapper.ExpenseMapper;
 import com.jys.smartbudget.mapper.UserMapper;
 import com.jys.smartbudget.service.BudgetService;
 import lombok.RequiredArgsConstructor;
@@ -25,17 +23,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class MonthlyBudgetJobConfig {
 
-    private final ExpenseMapper expenseMapper;
     private final BudgetMapper budgetMapper;
     private final BudgetService budgetService;
     private final UserMapper userMapper;  
@@ -123,12 +117,6 @@ public class MonthlyBudgetJobConfig {
 
                 for (BudgetDTO budget : budgets) {
 
-                    // if ("FOOD".equals(budget.getCategory())                          BatchSkipListener를 통한 BatchBudgetFailHistory 테스트용
-                    //         && "user1".equals(budget.getUserId())) {
-                    //         throw new RuntimeException("강제 실패 테스트");
-                    //     }
-
-
                     // 이미 예산이 존재하면 건너뜀
                     if (budgetService.existsByYearMonthCategory(budget)) {
                         businessSkipCount++;
@@ -141,17 +129,26 @@ public class MonthlyBudgetJobConfig {
                         );
                         continue;
                     }
-                        budgetMapper.insertBudget(budget);
-                        insertCount++;
 
-                        auditLog.info(
-                            "AUTO_BUDGET_CREATED user={} year={} month={} category={} amount={}",
-                            budget.getUserId(),
-                            budget.getYear(),
-                            budget.getMonth(),
-                            budget.getCategory().getCode(),
-                            budget.getAmount()
-                        );
+                    // ===== 테스트용 실패 유도 =====
+                    // testuser + FOOD 카테고리만 강제 실패
+                    if ("testuser".equals(budget.getUserId())
+                        && "FOOD".equals(budget.getCategory().getCode())) {
+
+                        throw new RuntimeException("TEST_FORCE_FAIL");
+                    }
+
+                    budgetMapper.insertBudget(budget);
+                    insertCount++;
+
+                    auditLog.info(
+                        "AUTO_BUDGET_CREATED user={} year={} month={} category={} amount={}",
+                        budget.getUserId(),
+                        budget.getYear(),
+                        budget.getMonth(),
+                        budget.getCategory().getCode(),
+                        budget.getAmount()
+                    );
                 }
             }
 

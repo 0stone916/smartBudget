@@ -8,7 +8,7 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import { logout } from "./api/authApi";
 
-import { getBudgets, deleteBudget } from "./api/budgetApi";
+import { getBudgets, deleteBudgetByIdAndUserId } from "./api/budgetApi";
 import { getExpenses, deleteExpense } from "./api/expenseApi";
 
 // 간단 카드 스타일
@@ -100,7 +100,7 @@ export default function App() {
 
   const handleDeleteBudget = async (id) => {
     try {
-      await deleteBudget(id);
+      await deleteBudgetByIdAndUserId(id);
       setReload((prev) => !prev);
     } catch (err) {
       console.error("예산 삭제 실패", err);

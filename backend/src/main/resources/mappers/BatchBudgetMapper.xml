@@ -73,6 +73,14 @@
         AND processed_yn = 'N'
     </update>
 
+    <select id="countUnprocessedFailHistories"> 
+        SELECT COUNT(*)
+        FROM batch_budget_fail_history
+        WHERE processed_yn = 'N';
+    </select>
+
+
+
 
 
 </mapper>

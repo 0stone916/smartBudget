@@ -16,4 +16,6 @@ public interface  BatchBudgetMapper {
 
     void markFailHistoryProcessed(String userId,int year,int month,String category,LocalDateTime processedAt);
 
+    int countUnprocessedFailHistories();
+
 }

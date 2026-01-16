@@ -62,9 +62,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
 
             .exceptionHandling(exception -> exception
-
-            // 인증 실패(401) 시 실행할 에러 핸들러를 지정
-            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 인증 실패(401) 시 실행할 에러 핸들러를 지정
         )
             // URL별 접근 권한 설정
             .authorizeHttpRequests(auth -> auth

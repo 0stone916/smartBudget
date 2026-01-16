@@ -48,8 +48,8 @@ public class BudgetService {
         }
     }
 
-    public void deleteBudget(Long id, String userId) {
-        budgetMapper.deleteBudget(id, userId);
+    public void deleteBudgetByIdAndUserId(Long id, String userId) {
+        budgetMapper.deleteBudgetByIdAndUserId(id, userId);
     }
 
     public Boolean existsByYearMonthCategory(BudgetDTO budget) {
@@ -60,20 +60,7 @@ public class BudgetService {
         return budgetMapper.selectById(id);
     }
 
-    @Transactional
-    public void changeAutoBudget(Boolean autoEnabled, String userId) {
-        budgetMapper.changeAutoBudget(
-            autoEnabled,
-            userId,
-            userId // updated_by
-        );
 
-            auditLog.info(
-            "POLICY_CHANGE policy=AUTO_BUDGET_MONTHLY user={} after_auto_enabled={}",
-            userId,
-            autoEnabled
-        );
-    }
 
 
 }

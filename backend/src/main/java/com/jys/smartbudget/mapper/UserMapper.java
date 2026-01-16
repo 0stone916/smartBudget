@@ -17,4 +17,14 @@ public interface UserMapper {
     void insertUser(UserDTO user);
 
     List<String> selectAutoBudgetTargetUserIds();
+
+    void deleteUser(String userId);
+
+    void changeAutoBudgetPolicy(
+        @Param("autoEnabled") boolean autoEnabled,
+        @Param("userId") String userId,
+        @Param("updatedBy") String updatedBy
+    );
+
+
 }

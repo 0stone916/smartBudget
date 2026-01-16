@@ -22,4 +22,5 @@ public interface ExpenseMapper {
 
     int hasExpensesByBudgetId(@Param("budgetId") Long budgetId);
 
+    void deleteExpensesByUserId(@Param("userId") String userId);
 }
