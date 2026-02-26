@@ -3,6 +3,7 @@ package com.jys.smartbudget.controller;
 import com.jys.smartbudget.dto.ApiResponse;
 import com.jys.smartbudget.dto.ExpenseDTO;
 import com.jys.smartbudget.dto.SearchRequest;
+import com.jys.smartbudget.dto.StatisticsDTO;
 import com.jys.smartbudget.service.ExpenseService;
 import com.jys.smartbudget.util.DateUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,12 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
+    @GetMapping("/insert")
+    public String insertData() {
+        expenseService.insertDummyData();
+        return "데이터 삽입 완료!";
+    }
+
     // 지출 조회
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<ExpenseDTO>>> searchExpenses(
@@ -31,13 +38,38 @@ public class ExpenseController {
             @Valid SearchRequest searchRequest) {
 
         String userId = (String) req.getAttribute("userId");
+        searchRequest.setUserId(userId);
 
-        ExpenseDTO expense = new ExpenseDTO();
-        expense.setUserId(userId);
-        expense.setYear(searchRequest.getYear());
-        expense.setMonth(searchRequest.getMonth());
 
-        List<ExpenseDTO> result = expenseService.searchExpenses(expense);
+        // ExpenseDTO expense = new ExpenseDTO();
+        // expense.setUserId(userId);
+        // expense.setYear(searchRequest.getYear());
+        // expense.setMonth(searchRequest.getMonth());
+
+        List<ExpenseDTO> result = expenseService.searchExpenses(searchRequest);
+
+
+        return ResponseEntity.ok(
+                ApiResponse.success("지출 조회 성공", result)
+        );
+    }
+
+    // 전체 지출 조회
+    @GetMapping("/getExpenseStatistics")
+    public ResponseEntity<ApiResponse<List<StatisticsDTO>>> getExpenseStatistics(
+            HttpServletRequest req,
+            @Valid SearchRequest searchRequest) {
+
+        String userId = (String) req.getAttribute("userId");
+        searchRequest.setUserId(userId);
+
+
+        // ExpenseDTO expense = new ExpenseDTO();
+        // expense.setUserId(userId);
+        // expense.setYear(searchRequest.getYear());
+        // expense.setMonth(searchRequest.getMonth());
+
+        List<StatisticsDTO> result = expenseService.getExpenseStatistics(searchRequest);
 
 
         return ResponseEntity.ok(
@@ -105,4 +137,10 @@ public class ExpenseController {
                 ApiResponse.success("지출 삭제 완료")
         );
     }
+
+
+
+
+
+
 }

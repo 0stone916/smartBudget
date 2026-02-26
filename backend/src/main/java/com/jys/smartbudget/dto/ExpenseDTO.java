@@ -40,4 +40,7 @@ public class ExpenseDTO {
     private Integer version;         //Optimistic Lock용
 
     private CategoryDTO category;
+
+    private Long totalAmount;
+
 }

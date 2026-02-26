@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.jys.smartbudget.dto.BudgetDTO;
 import com.jys.smartbudget.dto.ExpenseDTO;
+import com.jys.smartbudget.dto.SearchRequest;
 import com.jys.smartbudget.mapper.ExpenseMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class BudgetCalculationHelper {
         YearMonth targetYm
     ) {
 
-        ExpenseDTO condition = new ExpenseDTO();
+        SearchRequest condition = new SearchRequest();
         condition.setUserId(userId);
         condition.setYear(baseYm.getYear());
         condition.setMonth(baseYm.getMonthValue());

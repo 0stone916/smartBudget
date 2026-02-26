@@ -45,6 +45,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // OPTIONS 요청 → CORS preflight 요청, 토큰 검사 불필요
         return path.startsWith("/auth/") || 
                path.startsWith("/error") ||
+               path.startsWith("/expenses/insert") ||
                request.getMethod().equalsIgnoreCase("OPTIONS");
     }
 

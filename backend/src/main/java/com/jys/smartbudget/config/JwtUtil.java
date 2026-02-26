@@ -26,7 +26,7 @@ public class JwtUtil {
     JwtUtil 내부에서 jwtKey 로 JWT 서명/검증에 사용 */
     public String generateAccessToken(String userId) {
         Date now = new Date();
-        Date exp = new Date(now.toInstant().plus(Duration.ofMinutes(1)).toEpochMilli());
+        Date exp = new Date(now.toInstant().plus(Duration.ofMinutes(1000)).toEpochMilli());
 
 
         return Jwts.builder()

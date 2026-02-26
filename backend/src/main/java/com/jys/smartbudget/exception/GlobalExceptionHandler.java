@@ -51,6 +51,7 @@ public class GlobalExceptionHandler {
     // 그 외 모든 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+        e.printStackTrace();
         ErrorCode ec = ErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(ec.getStatus())
                 .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));

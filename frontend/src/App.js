@@ -10,6 +10,7 @@ import { logout } from "./api/authApi";
 
 import { getBudgets, deleteBudgetByIdAndUserId } from "./api/budgetApi";
 import { getExpenses, deleteExpense } from "./api/expenseApi";
+import { getExpenseStatistics } from "./api/expenseApi";
 
 // 간단 카드 스타일
 const cardStyle = {
@@ -38,7 +39,8 @@ export default function App() {
   const [showRegister, setShowRegister] = useState(false);
 
   const [budgets, setBudgets] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState([]); // 목록용 (페이징)
+  const [statistics, setStatistics] = useState([]); // 차트용 (집계 데이터)
 
   const [yearMonth, setYearMonth] = useState(() => {
     const now = new Date();
@@ -67,20 +69,44 @@ export default function App() {
     fetchBudgets();
   }, [isLoggedIn, reload, year, month]);
 
-  // 지출 조회
+  // 1. 차트용 통계 데이터 조회 (페이지 로드 시 1번)
   useEffect(() => {
     if (!isLoggedIn) return;
-
-    async function fetchExpenses() {
+    async function fetchStats() {
       try {
-        const response = await getExpenses(year, month);
-        setExpenses(response.data.data);
-      } catch (error) {
-        console.error("지출 조회 실패", error);
-      }
+        const response = await getExpenseStatistics(year, month);
+        setStatistics(response.data.data); // [{category: 'FOOD', total: 500000}, ...]
+      } catch (e) { console.error(e); }
     }
-    fetchExpenses();
+    fetchStats();
   }, [isLoggedIn, reload, year, month]);
+
+  // 2. 지출 목록 조회 (No-Offset 페이징)
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    async function fetchInitialExpenses() {
+      try {
+        // 첫 페이지 조회 (커서 없음)
+        const response = await getExpenses({ year, month });
+        setExpenses(response.data.data); 
+      } catch (e) { console.error(e); }
+    }
+    fetchInitialExpenses();
+  }, [isLoggedIn, reload, year, month]);
+
+  // 더보기 버튼 클릭 시 호출할 함수
+  const loadMoreExpenses = async () => {
+    const lastExpense = expenses[expenses.length - 1];
+    if (!lastExpense) return;
+
+    const response = await getExpenses({ 
+      year, 
+      month, 
+      lastDay: lastExpense.day, 
+      lastId: lastExpense.id 
+    });
+    setExpenses(prev => [...prev, ...response.data.data]);
+  };
 
 
   const handleSave = () => setReload((prev) => !prev);
@@ -168,7 +194,7 @@ export default function App() {
       {/* Pie Chart */}
       <div style={cardStyle}>
         <h2 style={{ textAlign: "center" }}>예산 대비 지출</h2>
-        <ExpensePieChart budgets={budgets} expenses={expenses} />
+        <ExpensePieChart budgets={budgets} statistics={statistics} />
       </div>
 
       {/* 지출 등록/수정 */}
@@ -176,9 +202,10 @@ export default function App() {
         <ExpenseForm selectedExpense={selectedExpense} budgets={budgets} year={year} month={month} onSave={handleSave} />
       </div>
 
-      {/* 지출 리스트 */}
+      {/* 지출 리스트: 페이징된 데이터 표시 */}
       <div style={cardStyle}>
         <ExpenseList expenses={expenses} onEdit={setSelectedExpense} onDelete={handleDeleteExpense} />
+        <button onClick={loadMoreExpenses}>더보기</button>
       </div>
 
       {/* 예산 등록/수정 */}

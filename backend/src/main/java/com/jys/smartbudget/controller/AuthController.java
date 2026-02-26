@@ -41,8 +41,11 @@ public class AuthController {
         // 1. UserService를 통해 로그인 검증
         // DB에서 userId로 사용자 찾고, BCrypt로 비밀번호 비교
         // 성공 시 UserDTO 반환, 실패 시 null 반환
+        log.info("@@@@@@@@@@@@@@@@@@@@@@");
+
         UserDTO loginUser = userService.login(user.getUserId(), user.getPassword());
         
+                log.info("@@@@@@@2222@@@");
         if (loginUser != null) {
             // 2. 로그인 성공 → JWT 토큰 생성
             // JwtUtil.generateToken()은 userId를 JWT에 담아 서명된 토큰 생성

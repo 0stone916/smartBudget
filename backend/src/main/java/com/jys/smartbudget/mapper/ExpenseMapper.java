@@ -1,6 +1,9 @@
 package com.jys.smartbudget.mapper;
 
 import com.jys.smartbudget.dto.ExpenseDTO;
+import com.jys.smartbudget.dto.SearchRequest;
+import com.jys.smartbudget.dto.StatisticsDTO;
+
 import io.lettuce.core.dynamic.annotation.Param;
 import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
@@ -8,7 +11,9 @@ import java.util.List;
 @Mapper
 public interface ExpenseMapper {
 
-    List<ExpenseDTO> searchExpenses(ExpenseDTO expense);
+    List<ExpenseDTO> searchExpenses(SearchRequest searchRequest); 
+
+    List<StatisticsDTO> getExpenseStatistics(SearchRequest searchRequest);  
 
     void insertExpense(ExpenseDTO expense);
 

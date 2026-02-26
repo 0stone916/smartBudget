@@ -75,7 +75,7 @@ public class SecurityConfig {
                 
                 // /auth/** 경로는 인증 없이 접근 가능
                 // 로그인, 회원가입 등은 토큰 없어도 가능해야 하니까
-                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/auth/**", "/expenses/insert").permitAll()
                 
                 // /budgets/**, /expenses/** 경로는 인증 필요
                 // authenticated(): 인증된 사용자만 접근 가능

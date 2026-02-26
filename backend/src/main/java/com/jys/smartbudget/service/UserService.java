@@ -5,12 +5,14 @@ import com.jys.smartbudget.mapper.UserMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -21,10 +23,17 @@ public class UserService {
 
 
     public UserDTO login(String userId, String password) {
+                  log.info("@!!!!!!!!!!!!!!!!!");
         UserDTO user = userMapper.findByUserId(userId);
+                log.info("@@@@@@@3333@@@");
+
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
+                log.info("@@@@@@@444@@@");
+
             return user;
         }
+                log.info("@@@@@@@555@@@");
+
         return null;
     }
 

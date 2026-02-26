@@ -24,26 +24,36 @@
 
     <select id="searchExpenses" resultMap="expenseMap">
         SELECT 
-        e.id,
-        b.id AS budget_id,
-        e.user_id,
-        e.amount,
-        e.day,
-        e.description,
-        e.version,
-        c.name,
-        c.code
-        FROM expense e
+            e.id, b.id AS budget_id, e.user_id, e.amount, e.day, 
+            e.description, e.version, c.name, c.code
+        FROM (
+            /* 1. 여기서 인덱스를 타고 10개만 먼저 뽑습니다 (빛의 속도) */
+            SELECT *
+            FROM expense
+            WHERE user_id = #{userId}
+            AND year = #{year}
+            AND month = #{month}
+            <if test="lastDay != null and lastId != null">
+                AND (day <![CDATA[<]]> #{lastDay} 
+                    OR (day = #{lastDay} AND id <![CDATA[<]]> #{lastId}))
+            </if>
+            ORDER BY day DESC, id DESC
+            LIMIT #{size}
+        ) e
+        /* 2. 딱 10개에 대해서만 조인을 수행합니다 (부하 거의 없음) */
         LEFT JOIN budget b ON b.id = e.budget_id
-        LEFT JOIN category c ON c.code = b.category_code 
-        WHERE e.user_id = #{userId}
-        <if test="year != null">
-            AND e.year = #{year}
-        </if>
-        <if test="month != null">
-            AND e.month = #{month}
-        </if>
-        ORDER BY e.month DESC
+        LEFT JOIN category c ON c.code = b.category_code
+    </select>
+
+    <select id="getExpenseStatistics" resultType="com.jys.smartbudget.dto.StatisticsDTO">
+        SELECT b.category_code as code, e_sum.total_amount as totalAmount
+        FROM (
+            SELECT budget_id, SUM(amount) as total_amount
+            FROM expense
+            WHERE user_id = #{userId} AND year = #{year} AND month = #{month}
+            GROUP BY budget_id
+        ) e_sum
+        JOIN budget b ON b.id = e_sum.budget_id;
     </select>
 
     <!-- 지출 등록 -->
