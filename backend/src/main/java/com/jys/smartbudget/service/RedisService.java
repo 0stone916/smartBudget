@@ -43,13 +43,30 @@ public class RedisService {
         redisTemplate.delete(refreshKey(userId));
     }
 
-        // 락 획득 시도 (30초 동안 유효)
-    public boolean acquireLock(String approvalNo) {
+    // 락 획득 시도 
+    public boolean acquireLockWithRetry(String approvalNo) {
+        // Todo: approvalNo로 이미 저장된 내역이 있는지 먼저 조회
+
+
+
         String key = "lock:payment:" + approvalNo;
-        // setIfAbsent는 Redis의 SETNX 명령어를 실행합니다 (값이 없을 때만 저장)
-        Boolean success = redisTemplate.opsForValue()
-                .setIfAbsent(key, "locked", Duration.ofSeconds(30));
-        return success != null && success;
+        int retryCount = 5; // 최대 5번 재시도
+        
+        while (retryCount > 0) {
+            Boolean success = redisTemplate.opsForValue()
+                    .setIfAbsent(key, "locked", Duration.ofSeconds(10));
+            
+            if (success != null && success) return true; // 락 획득 성공
+            
+            // 락 획득 실패 시 잠시 대기 후 재시도
+            try {
+                Thread.sleep(100); // 100ms 대기
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            retryCount--;
+        }
+        return false; // 최종 실패 시에만 false 반환
     }
 
     // 락 해제
