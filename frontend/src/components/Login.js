@@ -21,6 +21,7 @@ function Login({ onLoginSuccess, onShowRegister }) {
       // 세션 저장
       sessionStorage.setItem("accessToken", accessToken);
       sessionStorage.setItem("refreshToken", refreshToken);
+      sessionStorage.setItem("userId", userId);
 
       // axios 기본 헤더 등록
       api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;

@@ -26,5 +26,5 @@ public class SearchRequest {
     private Integer lastDay; 
     private String lastId;
     
-    private int size = 50; // 한 번에 가져올 개수
+    private int size = 5; // 한 번에 가져올 개수
 }

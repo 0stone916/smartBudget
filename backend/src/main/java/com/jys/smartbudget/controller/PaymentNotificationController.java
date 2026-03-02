@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import com.jys.smartbudget.dto.NotiRequestDto;
 import com.jys.smartbudget.service.PaymentService;
@@ -16,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class PaymentNotificationController {
 
     private final PaymentService paymentService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping
     public ResponseEntity<String> receiveNotification(HttpServletRequest req, @RequestBody NotiRequestDto notiRequestDto) {
@@ -24,6 +26,13 @@ public class PaymentNotificationController {
         try {
             // 실시간 장부 기록 및 예산 반영
             paymentService.processPaymentNotification(notiRequestDto);
+
+            String personalDestination = "/topic/payment/" + notiRequestDto.getUserId();
+            
+            log.info("알림 전송 경로: {}", personalDestination);
+            
+            messagingTemplate.convertAndSend(personalDestination, notiRequestDto);
+
             return ResponseEntity.ok("SUCCESS");
             
         } catch (DuplicateKeyException e) {

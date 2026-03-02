@@ -33,9 +33,9 @@ public class PaymentService {
         notiRequestDto.setDay(day);
 
         // 1. Redis 락 획득 시도
-        if (!redisService.acquireLock(approvalNo)) {
-            log.warn("중복 알림 감지: 이미 처리 중인 승인번호입니다 -> {}", approvalNo);
-            throw new RuntimeException("중복 처리 요청");
+        if (!redisService.acquireLockWithRetry(approvalNo)) {
+            log.warn("락 획득 실패");
+            throw new RuntimeException("락 획득 실패");
         }
 
         try {

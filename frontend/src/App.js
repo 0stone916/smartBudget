@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ExpenseList from "./components/ExpenseList";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import { logout } from "./api/authApi";
-import { getBudgets } from "./api/budgetApi";
 import { getExpenses, deleteExpense } from "./api/expenseApi";
+import SockJS from "sockjs-client";
+import { Stomp } from "@stomp/stompjs";
+import { Toaster, toast } from 'react-hot-toast'; // 토스트 알림 추가
 
-// 대시보드 카드 스타일
 const cardStyle = {
   padding: "25px",
   marginBottom: "20px",
@@ -29,7 +30,7 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
-  const [budgets, setBudgets] = useState([]);
+  const [budgets, setBudgets] = useState(0);
   const [expenses, setExpenses] = useState([]);
 
   const [yearMonth, setYearMonth] = useState(() => {
@@ -38,36 +39,79 @@ export default function App() {
   });
   const [year, month] = yearMonth.split("-");
 
-  // 초기 로그인 체크 (JWT 세션 유지)
+  const stompClient = useRef(null);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const currentUserId = sessionStorage.getItem("userId") || "testUser"; 
+
+    const socket = new SockJS("http://localhost:8080/ws-connect");
+    stompClient.current = Stomp.over(socket);
+
+    stompClient.current.connect({}, (frame) => {
+      console.log("STOMP 연결 성공!", frame);
+
+      const myTopic = `/topic/payment/${currentUserId}`;
+      
+      stompClient.current.subscribe(myTopic, (message) => {
+        const newPayment = JSON.parse(message.body);
+        
+        setExpenses((prev) => [newPayment, ...prev]);
+        setBudgets((prev) => Number(prev) - Number(newPayment.amount));
+
+        toast.custom((t) => (
+<div
+      onClick={() => toast.dismiss(t.id)} 
+      style={{
+        background: "#333",
+        color: "#fff",
+        padding: "20px",
+        borderRadius: "14px",
+        boxShadow: "0 12px 30px rgba(0,0,0,0.25)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+        minWidth: "280px",
+        cursor: "pointer", // 클릭 가능하다는 것을 사용자에게 인지시킴
+        border: "1px solid rgba(255,255,255,0.1)",
+        transition: "transform 0.1s active",
+        animation: t.visible ? "enter 0.3s ease-out" : "leave 0.3s ease-in"
+      }}
+    >
+            <div style={{ fontWeight: "bold", fontSize: "0.95em", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ color: "#4ade80" }}>●</span> 실시간 결제 승인
+            </div>
+            <div style={{ fontSize: "0.9em", opacity: 0.9 }}>
+              {newPayment.merchantName} : {Number(newPayment.amount).toLocaleString()}원
+            </div>
+            <div style={{ fontSize: "0.75em", opacity: 0.6 }}>
+              잔액: {Number(budgets - newPayment.amount).toLocaleString()}원
+            </div>
+          </div>
+        ), { duration: Infinity, position: "top-right" });
+      });
+    });
+
+    return () => {
+      if (stompClient.current) stompClient.current.disconnect();
+    };
+  }, [isLoggedIn, budgets]);
+
+  // 초기 로그인 체크
   useEffect(() => {
     const token = sessionStorage.getItem("accessToken");
     if (token) setIsLoggedIn(true);
   }, []);
 
-  // useEffect(() => {
-  //   if (!isLoggedIn) return;
-  //   async function fetchBudgets() {
-  //     try {
-  //       const response = await getBudgets(year, month);
-  //       setBudgets(response.data.data);
-  //     } catch (error) {
-  //       console.error("예산 데이터 로드 실패", error);
-  //     }
-  //   }
-  //   fetchBudgets();
-  // }, [isLoggedIn, reload, year, month]);
-
-  // [본질] 실시간 지출 내역 조회 (No-Offset 페이징 유지)
+  // 실시간 지출 내역 조회 (No-Offset 페이징)
   useEffect(() => {
     if (!isLoggedIn) return;
     async function fetchInitialExpenses() {
       try {
         const response = await getExpenses({ year, month, accountNumber: '110-123-456789' });
-        console.log(response);
-        
         setExpenses(response.data.data.expenses); 
         setBudgets(response.data.data.accountInfo.balance);
-
       } catch (e) { console.error(e); }
     }
     fetchInitialExpenses();
@@ -84,14 +128,14 @@ export default function App() {
       accountNumber: '110-123-456789'
     });
     setExpenses(prev => [...prev, ...response.data.data.expenses]);
-        setBudgets(response.data.data.accountInfo.balance);
-
+    // setBudgets(response.data.data.accountInfo.balance);
   };
 
   const handleLoginSuccess = () => setIsLoggedIn(true);
+  
   const handleLogout = async () => {
     try { await logout(); } catch (e) { console.error(e); }
-    sessionStorage.removeItem("accessToken");
+    sessionStorage.clear();
     setIsLoggedIn(false);
   };
 
@@ -110,7 +154,6 @@ export default function App() {
     setYearMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
   };
 
-  // 로그인/회원가입 분기 로직 유지
   if (!isLoggedIn) {
     if (showRegister) {
       return <Register onRegisterSuccess={() => setShowRegister(false)} onBackToLogin={() => setShowRegister(false)} />;
@@ -120,36 +163,33 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: "850px", margin: "0 auto", padding: "30px", backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
+      {/* 토스트 컨테이너 설정 */}
+      <Toaster />
       
-      {/* 헤더 섹션 */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
         <h1 style={{ margin: 0, color: "#1a1a1a", letterSpacing: "-1px" }}>SmartBudget <span style={{ color: "#0046ff", fontSize: "0.5em" }}>v2.0</span></h1>
         <button style={{ ...buttonStyle, backgroundColor: "#ffeded", color: "#ff4d4d" }} onClick={handleLogout}>로그아웃</button>
       </div>
 
-      {/* [핵심 1] 실시간 예산 잔액 카드 */}
       <div style={{ ...cardStyle, background: "linear-gradient(135deg, #0046ff 0%, #0031b3 100%)", color: "white" }}>
         <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.8, fontSize: "0.9em", marginBottom: "10px" }}>
           <span>연동 계좌: 110-123-456789</span>
-          <span>{yearMonth} 기준</span>
+          <div style={{ fontSize: "0.85em", backgroundColor: "rgba(255,255,255,0.1)", padding: "8px 15px", borderRadius: "8px" }}>
+            ● WebSocket 실시간 모니터링 중
+          </div>
         </div>
         <h3 style={{ margin: 0, fontWeight: "normal" }}>현재 결제 가능 예산</h3>
         <h2 style={{ fontSize: "2.8em", margin: "10px 0" }}>
-          {budgets} <small style={{fontSize: '0.5em'}}>원</small>
+          {Number(budgets).toLocaleString()} <small style={{fontSize: '0.5em'}}>원</small>
         </h2>
-        <div style={{ fontSize: "0.85em", backgroundColor: "rgba(255,255,255,0.1)", padding: "8px 15px", borderRadius: "8px", display: "inline-block" }}>
-          ● WebSocket 실시간 모니터링 중
-        </div>
       </div>
 
-      {/* 년/월 페이징 - 인덱스 활용 성능 최적화 강조 포인트 */}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", marginBottom: "25px" }}>
         <button style={{ ...buttonStyle, backgroundColor: "#fff", border: "1px solid #ddd" }} onClick={() => moveMonth(-1)}>◀</button>
         <strong style={{ fontSize: "20px", color: "#333" }}>{year}년 {month}월</strong>
         <button style={{ ...buttonStyle, backgroundColor: "#fff", border: "1px solid #ddd" }} onClick={() => moveMonth(1)}>▶</button>
       </div>
 
-      {/* [핵심 2] 실시간 지출 내역 리스트 */}
       <div style={cardStyle}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <h2 style={{ margin: 0, fontSize: "1.2em" }}>📊 실시간 지출 피드</h2>
@@ -158,11 +198,11 @@ export default function App() {
         
         <ExpenseList 
           expenses={expenses} 
-          onEdit={() => {}} // 결제 데이터이므로 수동 수정은 지양 (필요시 기능 활성화)
+          onEdit={() => {}} 
           onDelete={handleDeleteExpense} 
         />
         
-        {expenses.length > 0 && (
+        {expenses.length > 4 && (
           <button 
             onClick={loadMoreExpenses}
             style={{ width: "100%", marginTop: "20px", padding: "12px", border: "1px solid #eee", borderRadius: "8px", background: "#fff", cursor: "pointer", color: "#888", fontWeight: "bold" }}
@@ -172,7 +212,6 @@ export default function App() {
         )}
       </div>
 
-      {/* [핵심 3] 데이터 정합성 보정 결과 (Batch) 영역 */}
       <div style={{ ...cardStyle, border: "2px dashed #e0e0e0", backgroundColor: "transparent", textAlign: "center" }}>
         <h3 style={{ color: "#888", marginTop: 0 }}>🔍 일일 장부 대조 현황 (Batch)</h3>
         <p style={{ color: "#999", fontSize: "0.9em" }}>

@@ -39,7 +39,7 @@ export default function ExpenseList({ expenses, onEdit, onDelete }) {
       <table style={tableStyle}>
         <thead>
           <tr>
-            <th style={thStyle}>카테고리</th>
+            <th style={thStyle}>장소</th>
             <th style={thStyle}>일자</th>
             <th style={thStyle}>금액</th>
             <th style={thStyle}>설명</th>
@@ -49,8 +49,8 @@ export default function ExpenseList({ expenses, onEdit, onDelete }) {
         <tbody>
           {expenses.map((e) => {
             return (
-              <tr key={e.id}>
-                <td style={tdStyle}>{e.category?.name || "미지정"}</td>
+              <tr key={e.approvalNo || e.id}>
+                <td style={tdStyle}>{e.merchantName || "미지정"}</td>
                 <td style={tdStyle}>{e.day}일</td>
                 <td style={tdStyle}>{e.amount}원</td>
                 <td style={tdStyle}>{e.description}</td>
