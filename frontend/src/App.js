@@ -44,7 +44,12 @@ export default function App() {
   useEffect(() => {
     if (!isLoggedIn) return;
 
-    const currentUserId = sessionStorage.getItem("userId") || "testUser"; 
+    const currentUserId = sessionStorage.getItem("userId"); 
+
+    if (currentUserId == null) {
+      console.log("currentUserId is null");
+      return;
+    }
 
     const socket = new SockJS("http://localhost:8080/ws-connect");
     stompClient.current = Stomp.over(socket);
@@ -55,7 +60,9 @@ export default function App() {
       const myTopic = `/topic/payment/${currentUserId}`;
       
       stompClient.current.subscribe(myTopic, (message) => {
+        console.log("★★★ 웹소켓 원본 메시지 도착 ★★★", message.body);
         const newPayment = JSON.parse(message.body);
+        console.log("파싱된 데이터:", newPayment);
         
         setExpenses((prev) => [newPayment, ...prev]);
         setBudgets((prev) => Number(prev) - Number(newPayment.amount));
@@ -85,9 +92,6 @@ export default function App() {
             <div style={{ fontSize: "0.9em", opacity: 0.9 }}>
               {newPayment.merchantName} : {Number(newPayment.amount).toLocaleString()}원
             </div>
-            <div style={{ fontSize: "0.75em", opacity: 0.6 }}>
-              잔액: {Number(budgets - newPayment.amount).toLocaleString()}원
-            </div>
           </div>
         ), { duration: Infinity, position: "top-right" });
       });
@@ -96,7 +100,7 @@ export default function App() {
     return () => {
       if (stompClient.current) stompClient.current.disconnect();
     };
-  }, [isLoggedIn, budgets]);
+  }, [isLoggedIn]);
 
   // 초기 로그인 체크
   useEffect(() => {

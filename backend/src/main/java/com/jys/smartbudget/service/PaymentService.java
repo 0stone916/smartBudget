@@ -17,47 +17,31 @@ public class PaymentService {
     private final BudgetMapper budgetMapper;
     private final RedisService redisService;
 
+    @Transactional // 서비스 진입점부터 트랜잭션을 시작하는 것이 안전합니다.
     public void processPaymentNotification(NotiRequestDto notiRequestDto) {
-        String approvalNo = (String) notiRequestDto.getApprovalNo();
+        String approvalNo = notiRequestDto.getApprovalNo();
 
-        // 1. 은행에서 준 transacted_at (Timestamp) 활용
+        // 1. 시간 데이터 가공 
         LocalDateTime transactionTime = notiRequestDto.getTransactedAt(); 
+        notiRequestDto.setYear(transactionTime.getYear());
+        notiRequestDto.setMonth(transactionTime.getMonthValue());
+        notiRequestDto.setDay(transactionTime.getDayOfMonth());
 
-        // 2. 인덱스 최적화를 위해 연/월/일 추출
-        int year = transactionTime.getYear();
-        int month = transactionTime.getMonthValue();
-        int day = transactionTime.getDayOfMonth();
-
-        notiRequestDto.setYear(year);
-        notiRequestDto.setMonth(month);
-        notiRequestDto.setDay(day);
-
-        // 1. Redis 락 획득 시도
+        // 2. Redis 락 획득 (분산 환경 중복 처리 방지)
         if (!redisService.acquireLockWithRetry(approvalNo)) {
-            log.warn("락 획득 실패");
-            throw new RuntimeException("락 획득 실패");
+            throw new RuntimeException("중복 처리 방지를 위한 락 획득 실패: " + approvalNo);
         }
 
         try {
-            // 2. 실제 DB 저장 (트랜잭션 적용)
-            saveToDatabase(notiRequestDto);
+            // 3. 지출 기록 + 예산 차감
+            expenseMapper.insertExpense(notiRequestDto);
+            int updatedRows = budgetMapper.updateBudget(notiRequestDto);
+
+            if (updatedRows == 0) {
+                throw new RuntimeException("예산 정보 부족 혹은 누락: " + notiRequestDto.getUserId());
+            }
         } finally {
-            // 3. 작업 완료 후 반드시 락 해제
             redisService.releaseLock(approvalNo);
         }
-    }
-
-    @Transactional
-    protected void saveToDatabase(NotiRequestDto notiRequestDto) {
-        // 지출 내역 저장 (MyBatis)
-        expenseMapper.insertExpense(notiRequestDto);
-        // 부서 예산 차감 (MyBatis)
-        int updatedRows = budgetMapper.updateBudget(notiRequestDto);
-
-        if (updatedRows == 0) {
-            log.error("예산 차감 실패: 유저={}, 계좌={}", notiRequestDto.getUserId(), notiRequestDto.getAccountNumber());
-            throw new RuntimeException("등록된 예산 정보를 찾을 수 없거나 예산이 부족합니다.");
-        }
-        log.info("지출 기록 및 예산 차감 완료: {}", notiRequestDto.getApprovalNo());
     }
 }

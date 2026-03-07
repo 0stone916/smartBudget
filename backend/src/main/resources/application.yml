@@ -47,4 +47,12 @@ jwt:
   # 환경변수에서 읽음, 없으면 JwtKeyConfig에서 에러발생
   secret: ${JWT_SECRET}
 
+kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: smartbudget-group # 그룹명을 서비스 정체성에 맞게 변경
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+
 

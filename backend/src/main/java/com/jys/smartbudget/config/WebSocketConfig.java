@@ -20,7 +20,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // /topic은 1:N 방송, /queue는 1:1 메시지에 주로 사용
-        config.enableSimpleBroker("/queue");
+        // /topic과 /queue 두 경로 모두 메시지 브로커가 처리할 수 있도록 허용
+        config.enableSimpleBroker("/topic", "/queue");
     }
 }
