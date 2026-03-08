@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.jys.smartbudget.dto.ApiResponse;
 import jakarta.persistence.OptimisticLockException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,8 +51,12 @@ public class GlobalExceptionHandler {
 
     // 그 외 모든 예외
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        e.printStackTrace();
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e, HttpServletRequest request) {
+        log.error("[Error] URL: {}, Method: {}, Message: {}", 
+                request.getRequestURI(), 
+                request.getMethod(), 
+                e.getMessage(), e); 
+
         ErrorCode ec = ErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(ec.getStatus())
                 .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
