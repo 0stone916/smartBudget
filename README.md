@@ -8,7 +8,8 @@
 - **Infrastructure**: Docker, GitHub Actions
 
 ## [아키텍처] 3-MSA 설계
-<img width="711" height="525" alt="Untitled-2026-02-28-152120" src="https://github.com/user-attachments/assets/2b7188ce-d27d-4a38-afdd-eed94cec0c82" />
+<img width="887" height="774" alt="Untitled-2026-02-28-152w0" src="https://github.com/user-attachments/assets/898d0e60-0ac9-43eb-bf31-60733f7041ee" />
+
 
 
 `Payment-App`(결제 요청) -> `Core-Banking`(원장 처리/Kafka 메시지 발행) -> `Financial CMS`(알림 수신 및 분석)로 이어지는 Event-Driven Architecture(EDA)를 통해 시스템 간 결합도를 낮추고 가용성을 극대화했습니다.
