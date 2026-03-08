@@ -1,7 +1,6 @@
 package com.jys.smartbudget.consumer;
 
 import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jys.smartbudget.dto.NotiRequestDto;
@@ -17,15 +16,15 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 public class NotificationConsumer {
 
     private final ObjectMapper objectMapper;
-    private final PaymentService paymentService; // 기존 서비스 주입
+    private final PaymentService paymentService; 
     private final SimpMessagingTemplate messagingTemplate; // 웹소켓 알림용
 
-    @KafkaListener(topics = "payment-notif", groupId = "smartbudget-group")
+    @KafkaListener(topics = "payment-notif", groupId = "Financial CMS")
     public void consume(String message) throws JsonProcessingException {
         
         log.info(">>>> [Kafka] 결제 알림 수신: {}", message);
 
-        // 1. JSON 메시지를 기존에 쓰던 DTO(NotiRequestDto)로 변환
+        // 1. JSON 메시지를 기존에 쓰던 NotiRequestDto로 변환
         NotiRequestDto notiRequestDto = objectMapper.readValue(message, NotiRequestDto.class);
 
         // 2. 기존 PaymentService의 비즈니스 로직 호출 (Redis 락 + DB 저장 포함)

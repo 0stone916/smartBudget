@@ -43,30 +43,14 @@ public class RedisService {
         redisTemplate.delete(refreshKey(userId));
     }
 
-    // 락 획득 시도 
-    public boolean acquireLockWithRetry(String approvalNo) {
-        // Todo: approvalNo로 이미 저장된 내역이 있는지 먼저 조회
-
-
-
+    public boolean acquireLock(String approvalNo) {
         String key = "lock:payment:" + approvalNo;
-        int retryCount = 5; // 최대 5번 재시도
         
-        while (retryCount > 0) {
-            Boolean success = redisTemplate.opsForValue()
-                    .setIfAbsent(key, "locked", Duration.ofSeconds(10));
-            
-            if (success != null && success) return true; // 락 획득 성공
-            
-            // 락 획득 실패 시 잠시 대기 후 재시도
-            try {
-                Thread.sleep(100); // 100ms 대기
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            retryCount--;
-        }
-        return false; // 최종 실패 시에만 false 반환
+        // 재시도 없이 딱 한 번만 시도 (Kafka가 대신 재시도해줄 것이므로)
+        Boolean success = redisTemplate.opsForValue()
+                .setIfAbsent(key, "locked", Duration.ofSeconds(10));
+                
+        return success != null && success;
     }
 
     // 락 해제

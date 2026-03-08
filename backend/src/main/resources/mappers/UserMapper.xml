@@ -12,35 +12,5 @@
         INSERT INTO user (user_id, password, name, email)
         VALUES (#{userId}, #{password}, #{name}, #{email})
     </insert>
-
-    <select id="selectAutoBudgetTargetUserIds" resultType="String">
-        SELECT u.user_id
-        FROM user u
-        JOIN auto_budget_policy p
-            ON u.user_id = p.user_id
-        WHERE p.auto_enabled = true
-        ORDER BY u.user_id
-    </select>
-
-    <insert id="changeAutoBudgetPolicy">
-        INSERT INTO auto_budget_policy (
-            user_id,
-            auto_enabled,
-            updated_by
-        )
-        VALUES (
-            #{userId},
-            #{autoEnabled},
-            #{updatedBy}
-        )
-        ON DUPLICATE KEY UPDATE
-            auto_enabled = VALUES(auto_enabled),
-            updated_by = VALUES(updated_by),
-            updated_at = CURRENT_TIMESTAMP;
-    </insert>
-
-    <delete id="deleteUser">
-        DELETE FROM user WHERE user_id = #{userId}
-    </delete>
     
 </mapper>

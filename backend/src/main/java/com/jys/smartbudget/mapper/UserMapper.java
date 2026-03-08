@@ -1,9 +1,6 @@
 package com.jys.smartbudget.mapper;
 
 import com.jys.smartbudget.dto.UserDTO;
-
-import java.util.List;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,16 +12,5 @@ public interface UserMapper {
 
     // 회원가입용: 새 유저 등록
     void insertUser(UserDTO user);
-
-    List<String> selectAutoBudgetTargetUserIds();
-
-    void deleteUser(String userId);
-
-    void changeAutoBudgetPolicy(
-        @Param("autoEnabled") boolean autoEnabled,
-        @Param("userId") String userId,
-        @Param("updatedBy") String updatedBy
-    );
-
 
 }
