@@ -19,9 +19,9 @@ public class PaymentService {
     public void processPaymentNotification(NotiRequestDto notiRequestDto) {
 
         LocalDateTime transactionTime = notiRequestDto.getTransactedAt();
-        notiRequestDto.setYear(transactionTime.getYear());
-        notiRequestDto.setMonth(transactionTime.getMonthValue());
-        notiRequestDto.setDay(transactionTime.getDayOfMonth());
+        // notiRequestDto.setYear(transactionTime.getYear());
+        // notiRequestDto.setMonth(transactionTime.getMonthValue());
+        // notiRequestDto.setDay(transactionTime.getDayOfMonth());
 
         String approvalNo = notiRequestDto.getApprovalNo();
 

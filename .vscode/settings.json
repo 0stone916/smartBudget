@@ -1,11 +1,12 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.debug.settings.onBuildFailureProceed": true,
-    "java.debug.settings.showStaticVariables": true,
-
-    // Gradle 관련 설정 추가
-    "java.import.gradle.enabled": true,
-    "java.import.gradle.autoDetection": "on",
-    "java.configuration.checkProjectSettingsExclusions": false
+  "java.import.gradle.enabled": true,
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.autobuild.enabled": true,
+  "java.compile.nullAnalysis.mode": "disabled",
+  "jdk.telemetry.enabled": false,
+  "editor.formatOnSave": true,
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java"
+  },
+  "java.jdt.ls.lombokSupport.enabled": true
 }

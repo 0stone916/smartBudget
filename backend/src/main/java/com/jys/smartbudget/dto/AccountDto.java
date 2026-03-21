@@ -9,9 +9,9 @@ import lombok.AllArgsConstructor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BankAccountDto {
+public class AccountDto {
     private String accountNumber; // 계좌번호
     private String ownerName;     // 소유자명
     private long balance;         // 현재 잔액
-    private String userId;        // 매핑된 사용자 ID (조회 조건)
+    private String userId;        // 사용자 ID 
 }

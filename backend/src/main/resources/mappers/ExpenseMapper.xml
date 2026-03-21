@@ -10,60 +10,35 @@
         FROM expense
         WHERE user_id = #{userId}
         AND account_number = #{accountNumber}
-        AND year = #{year}
-        AND month = #{month}
-        <if test="lastDay != null and lastId != null">
-            AND (day <![CDATA[<]]> #{lastDay} 
-                OR (day = #{lastDay} AND id <![CDATA[<]]> #{lastId}))
+        AND transacted_at BETWEEN #{startTime} AND #{endTime}
+        <if test="lastTimestamp != null and lastId != null">
+            AND (transacted_at <![CDATA[<]]> #{lastTimestamp} 
+                OR (transacted_at = #{lastTimestamp} AND id <![CDATA[<]]> #{lastId}))
         </if>
-        ORDER BY day DESC, id DESC
+        ORDER BY transacted_at DESC, id DESC
         LIMIT #{size}
     </select>
 
     <!-- 지출 등록 -->
     <insert id="insertExpense" parameterType="com.jys.smartbudget.dto.ExpenseDTO">
         INSERT INTO expense (
-            user_id, account_number, amount, merchant_name, approval_no, year, month, day, transacted_at
+            user_id, account_number, amount, merchant_name, approval_no, transacted_at
         ) VALUES (
-            #{userId}, #{accountNumber}, #{amount}, #{merchantName}, #{approvalNo}, #{year}, #{month},
-            #{day}, #{transactedAt}
+            #{userId}, #{accountNumber}, #{amount}, #{merchantName}, #{approvalNo}, #{transactedAt}
             )
     </insert>
 
-        <select id="findByApprovalNo" parameterType="string" resultType="com.jys.smartbudget.dto.ExpenseDTO">
-        SELECT 
-            id,
-            user_id,
-            account_number,
-            amount,
-            merchant_name,
-            approval_no,
-            year,
-            month,
-            day,
-            status,
-            transacted_at
+    <select id="findByApprovalNo" parameterType="string" resultType="com.jys.smartbudget.dto.ExpenseDTO">
+        SELECT *
         FROM expense
         WHERE approval_no = #{approvalNo}
     </select>
 
-    <select id="findExpensesByDate" parameterType="java.time.LocalDate" resultType="com.jys.smartbudget.dto.ExpenseDTO">
-        SELECT 
-            id,
-            user_id,
-            account_number,
-            amount,
-            merchant_name,
-            approval_no,
-            year,
-            month,
-            day,
-            status,
-            transacted_at
+    <select id="findExpensesByCondition" resultType="com.jys.smartbudget.dto.ExpenseDTO">
+        SELECT *
         FROM expense
-        WHERE year = YEAR(#{yesterday})
-          AND month = MONTH(#{yesterday})
-          AND day = DAY(#{yesterday})
+        WHERE account_number = #{accountNo}
+        AND transacted_at BETWEEN #{startDateTime} AND #{endDateTime}
     </select>
 
 

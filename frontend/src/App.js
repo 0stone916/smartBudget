@@ -108,11 +108,12 @@ export default function App() {
     if (token) setIsLoggedIn(true);
   }, []);
 
-  // 실시간 지출 내역 조회 (No-Offset 페이징)
+  // 실시간 지출 내역 조회 (초기 로딩)
   useEffect(() => {
     if (!isLoggedIn) return;
     async function fetchInitialExpenses() {
       try {
+        // year, month만 보내면 서버에서 해당 월의 startTime/endTime을 계산함
         const response = await getExpenses({ year, month, accountNumber: '110-123-456789' });
         setExpenses(response.data.data.expenses); 
         setBudgets(response.data.data.accountInfo.balance);
@@ -121,18 +122,20 @@ export default function App() {
     fetchInitialExpenses();
   }, [isLoggedIn, reload, year, month]);
 
+  // 더보기 (No-Offset 페이징)
   const loadMoreExpenses = async () => {
     const lastExpense = expenses[expenses.length - 1];
     if (!lastExpense) return;
+
     const response = await getExpenses({ 
       year, 
       month, 
-      lastDay: lastExpense.day, 
+      lastTimestamp: lastExpense.transactedAt, 
       lastId: lastExpense.id,
       accountNumber: '110-123-456789'
     });
+    
     setExpenses(prev => [...prev, ...response.data.data.expenses]);
-    // setBudgets(response.data.data.accountInfo.balance);
   };
 
   const handleLoginSuccess = () => setIsLoggedIn(true);

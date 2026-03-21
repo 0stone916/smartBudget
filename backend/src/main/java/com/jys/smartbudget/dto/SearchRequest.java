@@ -1,18 +1,19 @@
 package com.jys.smartbudget.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.hibernate.validator.constraints.Range;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-@Getter @Setter
+@Getter
+@Setter
 public class SearchRequest {
 
-    private String userId;    // 유저
+    private String userId; // 유저
 
-    private String accountNumber;    // 유저
+    private String accountNumber; // 유저
 
     @NotNull(message = "년도는 필수입니다.")
     @Min(value = 2000, message = "년도가 올바르지 않습니다.")
@@ -22,9 +23,13 @@ public class SearchRequest {
     @Range(min = 1, max = 12, message = "월은 1~12 사이여야 합니다.")
     private Integer month;
 
+    private LocalDateTime startTime;
+
+    private LocalDateTime endTime;
+
     // 더보기 페이징
-    private Integer lastDay; 
+    private Integer lastDay;
     private String lastId;
-    
+
     private int size = 5; // 한 번에 가져올 개수
 }
