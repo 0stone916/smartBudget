@@ -22,7 +22,7 @@ public class ApiResponse<T> {
         this.message = message;
         this.data = data;
     }
-    
+
     // 성공 응답(기본)
     public static ApiResponse<Void> success(String message) {
         return new ApiResponse<>(true, "S000", message, null);
@@ -32,11 +32,9 @@ public class ApiResponse<T> {
      * 성공 응답 생성 (정적 팩토리 메서드)
      * static 메서드 내 제네릭 타입 활용을 위해 메서드 레벨의 <T> 선언
      */
-    // 실패 응답(데이터 포함)
     public static <T> ApiResponse<T> success(String message, T data) {
         return new ApiResponse<>(true, "S000", message, data);
     }
-
 
     // 실패 응답(기본)
     public static ApiResponse<Void> fail(String code, String message) {

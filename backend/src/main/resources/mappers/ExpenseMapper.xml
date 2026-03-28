@@ -16,7 +16,9 @@
                 OR (transacted_at = #{lastTimestamp} AND id <![CDATA[<]]> #{lastId}))
         </if>
         ORDER BY transacted_at DESC, id DESC
-        LIMIT #{size}
+        <if test="size != null">
+            LIMIT #{size}
+        </if>
     </select>
 
     <!-- 지출 등록 -->

@@ -26,6 +26,7 @@ public class SearchRequest {
     private LocalDateTime startTime;
 
     private LocalDateTime endTime;
+    private LocalDateTime lastTimestamp;
 
     // 더보기 페이징
     private Integer lastDay;

@@ -20,14 +20,10 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "서버 오류가 발생했습니다."),
     INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "C003", "유효하지 않은 날짜입니다."),
 
-    CANNOT_CHANGE_CATEGORY_WITH_EXPENSES(HttpStatus.CONFLICT, "D001", "지출내역이 있는 예산은 카테고리 변경 할 수 없습니다");
+    CANNOT_CHANGE_CATEGORY_WITH_EXPENSES(HttpStatus.CONFLICT, "D001", "지출내역이 있는 예산은 카테고리 변경 할 수 없습니다"),
 
-
-    
-
-
-    
-
+    // 서비스 이용 불가 (세마포어 차단 시 사용)
+    TOO_MANY_REQUESTS(HttpStatus.SERVICE_UNAVAILABLE, "F002", "현재 접속자가 많아 조회가 불가능합니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
     private final String code;

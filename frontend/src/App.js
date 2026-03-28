@@ -114,7 +114,7 @@ export default function App() {
     async function fetchInitialExpenses() {
       try {
         // year, month만 보내면 서버에서 해당 월의 startTime/endTime을 계산함
-        const response = await getExpenses({ year, month, accountNumber: '110-123-456789' });
+        const response = await getExpenses({ year, month, accountNumber: '110-123-456789', size: 10 });
         setExpenses(response.data.data.expenses); 
         setBudgets(response.data.data.accountInfo.balance);
       } catch (e) { console.error(e); }
@@ -132,7 +132,8 @@ export default function App() {
       month, 
       lastTimestamp: lastExpense.transactedAt, 
       lastId: lastExpense.id,
-      accountNumber: '110-123-456789'
+      accountNumber: '110-123-456789',
+      size: 10
     });
     
     setExpenses(prev => [...prev, ...response.data.data.expenses]);
