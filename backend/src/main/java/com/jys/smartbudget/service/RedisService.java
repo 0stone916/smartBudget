@@ -10,10 +10,15 @@ import java.time.Duration;
 public class RedisService {
 
     private final StringRedisTemplate redisTemplate;
-    private static final Duration ACCESS_TOKEN_EXP = Duration.ofMinutes(1);
+    private static final Duration ACCESS_TOKEN_EXP = Duration.ofMinutes(30);
 
-    private String accessKey(String userId) { return "access:" + userId; }
-    private String refreshKey(String userId) { return "refresh:" + userId; }
+    private String accessKey(String userId) {
+        return "access:" + userId;
+    }
+
+    private String refreshKey(String userId) {
+        return "refresh:" + userId;
+    }
 
     public void saveAccessToken(String userId, String token) {
         redisTemplate.opsForValue().set(accessKey(userId), token, ACCESS_TOKEN_EXP);
@@ -29,10 +34,9 @@ public class RedisService {
 
     public void saveRefreshToken(String userId, String refreshToken) {
         redisTemplate.opsForValue().set(
-            refreshKey(userId),
-            refreshToken,
-            Duration.ofDays(7)
-        );
+                refreshKey(userId),
+                refreshToken,
+                Duration.ofDays(7));
     }
 
     public String getRefreshToken(String userId) {
@@ -45,11 +49,11 @@ public class RedisService {
 
     public boolean acquireLock(String approvalNo) {
         String key = "lock:payment:" + approvalNo;
-        
+
         // 재시도 없이 딱 한 번만 시도 (Kafka가 대신 재시도해줄 것이므로)
         Boolean success = redisTemplate.opsForValue()
                 .setIfAbsent(key, "locked", Duration.ofSeconds(10));
-                
+
         return success != null && success;
     }
 

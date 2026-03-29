@@ -13,21 +13,22 @@ public class JwtUtil {
     private final Key jwtKey;
 
     public JwtUtil(Key jwtKey) {
-        //JwtUtil 은 @Component 이므로 스프링이 생성할 때 자동으로 의존성을 찾는다
+        // JwtUtil 은 @Component 이므로 스프링이 생성할 때 자동으로 의존성을 찾는다
         this.jwtKey = jwtKey;
     }
 
-    /* JwtKeyConfig가 Key Bean 생성
-        ↓
-    Spring Container에 Key Bean 저장
-        ↓
-    JwtUtil 생성 시 Spring이 Key Bean을 찾아서 생성자에 넣어줌
-        ↓
-    JwtUtil 내부에서 jwtKey 로 JWT 서명/검증에 사용 */
+    /*
+     * JwtKeyConfig가 Key Bean 생성
+     * ↓
+     * Spring Container에 Key Bean 저장
+     * ↓
+     * JwtUtil 생성 시 Spring이 Key Bean을 찾아서 생성자에 넣어줌
+     * ↓
+     * JwtUtil 내부에서 jwtKey 로 JWT 서명/검증에 사용
+     */
     public String generateAccessToken(String userId) {
         Date now = new Date();
-        Date exp = new Date(now.toInstant().plus(Duration.ofMinutes(1000)).toEpochMilli());
-
+        Date exp = new Date(now.toInstant().plus(Duration.ofMinutes(30)).toEpochMilli());
 
         return Jwts.builder()
                 .setSubject(userId)
@@ -49,10 +50,9 @@ public class JwtUtil {
                 .compact();
     }
 
-
     public String extractUserId(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(jwtKey)   
+                .setSigningKey(jwtKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()

@@ -18,7 +18,7 @@ public class PaymentService {
     // 락과 트랜잭션의 분리(레이스 경합 방지)
     public void processPaymentNotification(NotiRequestDto notiRequestDto) {
 
-        LocalDateTime transactionTime = notiRequestDto.getTransactedAt();
+        // LocalDateTime transactionTime = notiRequestDto.getTransactedAt();
         // notiRequestDto.setYear(transactionTime.getYear());
         // notiRequestDto.setMonth(transactionTime.getMonthValue());
         // notiRequestDto.setDay(transactionTime.getDayOfMonth());
